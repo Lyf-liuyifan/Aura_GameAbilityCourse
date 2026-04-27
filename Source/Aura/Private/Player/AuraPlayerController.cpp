@@ -3,6 +3,12 @@
 
 #include "Player/AuraPlayerController.h"
 #include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
+
+
+class UInputMappingContext;
+class UInputAction;
+struct FInputActionValue;
 
 AAuraPlayerController::AAuraPlayerController()
 {
@@ -16,6 +22,7 @@ AAuraPlayerController::AAuraPlayerController()
 //输入系统就绪（拿 Subsystem + 加 MappingContext）
 //鼠标显示设置（显示光标 + 样式）
 //输入模式设置（Game + UI + 不锁鼠标 + 不隐藏光标）
+//玩家控制器如果想要能够处理玩家输入，得先获得本地玩家子系统的引用，并将输入映射上下文添加到该子系统中。输入映射上下文定义了玩家输入与游戏行为之间的映射关系，确保玩家的输入能够正确地被识别和处理。
 void AAuraPlayerController::BeginPlay()
 {
 
@@ -46,3 +53,37 @@ void AAuraPlayerController::BeginPlay()
 
 
 }
+
+void AAuraPlayerController::SetupInputComponent()
+{
+		Super::SetupInputComponent();
+		//获取玩家输入组件，并将玩家输入事件与相应的函数绑定在一起，以便在游戏中处理玩家的输入行为。
+		UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAuraPlayerController::Move);
+
+}
+
+void AAuraPlayerController::Move(const FInputActionValue& Value)
+{
+	//这是把值转换成一个二维向量，因为玩家的移动通常是基于水平和垂直轴的输入，例如WASD键或游戏手柄的左摇杆。通过将输入值转换为二维向量，可以更方便地处理玩家的移动逻辑，例如计算移动方向和速度。
+	const FVector2D MovementVector = Value.Get<FVector2D>();
+	//获取玩家控制器的控制旋转，这个旋转通常代表玩家当前的视角方向。通过获取控制旋转，可以将玩家的输入转换为相对于玩家视角的移动方向，使得玩家能够根据当前的视角进行移动。
+	const FRotator Rotation = GetControlRotation();
+	//创建一个新的旋转对象，表示玩家在水平面上的旋转。通过将控制旋转的俯仰和滚转分量设置为0，只保留偏航分量，可以确保玩家的移动方向只受到水平旋转的影响，而不会受到垂直旋转的干扰。
+	const FRotator YawRotation(0, Rotation.Yaw, 0);
+	//根据玩家的输入向量和水平旋转计算出前进方向的向量。通过将输入向量的X分量，可以得到玩家在当前视角下的前进方向。
+	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	//根据玩家的输入向量和水平旋转计算出右移方向的向量。通过将输入向量的Y分量，可以得到玩家在当前视角下的右移方向。
+	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+	if(APawn* ControlledPawn = GetPawn<APawn>())
+	{
+		//根据玩家的输入向量和计算出的前进方向，添加一个沿着前进方向的移动输入。这样玩家就可以根据当前的视角进行前进或后退。
+		ControlledPawn->AddMovementInput(ForwardDirection, MovementVector.Y);
+		//根据玩家的输入向量和计算出的右移方向，添加一个沿着右移方向的移动输入。这样玩家就可以根据当前的视角进行左右移动。
+		ControlledPawn->AddMovementInput(RightDirection, MovementVector.X);
+	}
+
+}
+
+
