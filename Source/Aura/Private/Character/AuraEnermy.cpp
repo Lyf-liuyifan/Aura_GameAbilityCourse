@@ -3,6 +3,8 @@
 
 #include "Character/AuraEnermy.h"
 #include "../Aura.h"
+#include "AbilitySystem/AuraAbilitySystemComponent.h"
+#include "AbilitySystem/AuraAttributeSet.h"
 #include "Components/CapsuleComponent.h"
 
 AAuraEnermy::AAuraEnermy()
@@ -15,6 +17,11 @@ AAuraEnermy::AAuraEnermy()
 	Weapon->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
 	GetMesh()->SetRenderCustomDepth(false);
 	Weapon->SetRenderCustomDepth(false);
+
+	AbilitySystemComponent = CreateDefaultSubobject<UAuraAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AttributeSet = CreateDefaultSubobject<UAuraAttributeSet>(TEXT("AttributeSet"));
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 }
 
 void AAuraEnermy::HighlightEnermy()
