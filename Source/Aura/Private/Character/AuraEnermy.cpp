@@ -9,12 +9,12 @@ AAuraEnermy::AAuraEnermy()
 
 void AAuraEnermy::HighlightEnermy()
 {
-
-
+	UE_LOG(LogTemp, Log, TEXT("Highlight Enermy"));
+	bIsHighlighted = true;
 }
 
 void AAuraEnermy::UnHighlightEnermy()
 {
-
-
+	UE_LOG(LogTemp, Log, TEXT("UnHighlight Enermy"));
+	bIsHighlighted = false;
 }

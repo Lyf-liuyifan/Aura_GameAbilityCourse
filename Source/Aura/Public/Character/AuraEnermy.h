@@ -18,4 +18,7 @@ public:
 	AAuraEnermy();
 	virtual void HighlightEnermy() override;
 	virtual void UnHighlightEnermy() override;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Interaction")
+	bool bIsHighlighted;
 };

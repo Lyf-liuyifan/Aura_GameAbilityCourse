@@ -12,6 +12,7 @@
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
+class IEnermyInterface;
 
 //我的想法就是首先玩家控制器类想要获取玩家输入并且转换成输出
 //首先得先获取玩家输入inputcomponent，然后把玩家输入和函数绑定在一起，最后在游戏中处理玩家的输入行为
@@ -23,6 +24,7 @@ class AURA_API AAuraPlayerController : public APlayerController
 	
 public:
 	AAuraPlayerController();
+	virtual void PlayerTick(float DeltaTime) override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -38,4 +40,9 @@ private:
 	TObjectPtr<UInputAction> MoveAction;
 
 	void Move(const FInputActionValue& Value);
+
+	void CursorTrace();
+
+	IEnermyInterface* LastActor;
+	IEnermyInterface* FocusedActor;
 };

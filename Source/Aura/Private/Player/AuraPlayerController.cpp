@@ -4,6 +4,7 @@
 #include "Player/AuraPlayerController.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "Character/AuraEnermy.h"
 
 
 class UInputMappingContext;
@@ -15,6 +16,14 @@ AAuraPlayerController::AAuraPlayerController()
 	//当前对象被复制时，是否应该复制它的属性。对于玩家控制器来说，通常需要设置为true，以便在网络游戏中正确同步玩家状态和行为。
 	//主要作用就是允许玩家控制器在服务器和客户端之间进行通信和同步，使得玩家的输入、状态和行为能够在网络游戏中正确地反映出来。
 	bReplicates = true;
+
+}
+
+void AAuraPlayerController::PlayerTick(float DeltaTime)
+{
+	Super::PlayerTick(DeltaTime);
+
+	CursorTrace();
 
 }
 
@@ -82,6 +91,65 @@ void AAuraPlayerController::Move(const FInputActionValue& Value)
 		ControlledPawn->AddMovementInput(ForwardDirection, MovementVector.Y);
 		//根据玩家的输入向量和计算出的右移方向，添加一个沿着右移方向的移动输入。这样玩家就可以根据当前的视角进行左右移动。
 		ControlledPawn->AddMovementInput(RightDirection, MovementVector.X);
+	}
+
+}
+
+void AAuraPlayerController::CursorTrace()
+{
+	//获取鼠标下的结果，使用ECC_Visibility通道进行碰撞检测，
+	// 并将结果存储在CursorHit变量中。这样可以检测鼠标指针下是否有可见的对象，并获取相关信息，例如碰撞位置、碰撞对象等。
+	FHitResult CursorHit;
+	GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
+	if (!CursorHit.bBlockingHit) return;
+
+	//如果鼠标下有一个可见的对象，并且该对象实现了IEnermyInterface接口，那么将FocusedActor设置为该对象。这样可以让玩家控制器知道当前鼠标指针下的对象是什么，以便在游戏中进行相应的交互或显示相关信息。	
+	LastActor = FocusedActor;
+	FocusedActor = Cast<IEnermyInterface>(CursorHit.GetActor());
+
+	/*
+	* A.上一个物体空并且当前物体也是空
+	*	- 什么都不做
+	* B.上一个物体空并且当前物体不空
+	*	- 可以触发一个事件，例如显示提示信息或高亮当前物体
+	* C.上一个物体不空并且当前物体为空
+	*	- 可以触发一个事件，例如隐藏提示信息或取消高亮
+	* D.上一个物体不空并且当前物体不空但是是同一个物体
+	* 
+	* E.上一个物体不空并且当前物体不空但是是不同的物体
+	*/
+
+	if (LastActor == nullptr)
+	{
+		if (FocusedActor != nullptr)
+		{
+			//B.上一个物体空并且当前物体不空
+			FocusedActor->HighlightEnermy();
+		}else{
+			//A.什么都不做
+		}
+
+
+	}
+	else {//上一个物体不空
+		if(FocusedActor != nullptr)
+		{
+			if(LastActor == FocusedActor)
+			{
+				//D.上一个物体不空并且当前物体不空但是是同一个物体
+				return;
+			}
+			else {
+				//E.上一个物体不空并且当前物体不空但是是不同的物体
+				LastActor->UnHighlightEnermy();
+				FocusedActor->HighlightEnermy();
+			}
+			
+		}
+		else {
+			//C.上一个物体不空并且当前物体为空
+			LastActor->UnHighlightEnermy();
+		}
 	}
 
 }
