@@ -3,3 +3,18 @@
 
 #include "Character/AuraEnermy.h"
 
+AAuraEnermy::AAuraEnermy()
+{
+}
+
+void AAuraEnermy::HighlightEnermy()
+{
+
+
+}
+
+void AAuraEnermy::UnHighlightEnermy()
+{
+
+
+}
