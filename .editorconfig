@@ -1,0 +1,6 @@
+root = true
+
+[*.{h,hpp,c,cc,cpp,cs,ini,uproject,uplugin,md,txt,json}]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true

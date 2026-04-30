@@ -29,7 +29,6 @@ void AAuraEnermy::HighlightEnermy()
 	UE_LOG(LogTemp, Log, TEXT("Highlight Enermy"));
 	bIsHighlighted = true;
 
-	//取出骨骼网格体高亮
 	GetMesh()->SetRenderCustomDepth(true);
 	GetMesh()->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
 	Weapon->SetRenderCustomDepth(true);
@@ -42,4 +41,11 @@ void AAuraEnermy::UnHighlightEnermy()
 	bIsHighlighted = false;
 	GetMesh()->SetRenderCustomDepth(false);
 	Weapon->SetRenderCustomDepth(false);
+}
+
+void AAuraEnermy::BeginPlay()
+{
+	Super::BeginPlay();
+
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 }

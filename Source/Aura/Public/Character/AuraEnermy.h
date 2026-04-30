@@ -15,10 +15,19 @@ class AURA_API AAuraEnermy : public AAuraCharacterBase, public IEnermyInterface
 {
 	GENERATED_BODY()
 public:
+
+	/* Enermy Interface*/
 	AAuraEnermy();
 	virtual void HighlightEnermy() override;
 	virtual void UnHighlightEnermy() override;
 
+
+
+	/* end Enermy Interface*/
+
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Interaction")
 	bool bIsHighlighted;
+
+protected:
+	virtual void BeginPlay() override;
 };

@@ -9,7 +9,8 @@
 AAuraPlayerState::AAuraPlayerState()
 {
 
-	NetUpdateFrequency = 100.0f;//ÕâÊÇPlayerStateµÄÄ¬ÈÏÖµ£¬ÉèÖÃÎª100¿ÉÒÔÈÃËü¸üÆµ·±µØ¸üĞÂ£¬±£³ÖÓë·şÎñÆ÷µÄÍ¬²½¸ü¼°Ê±¡£Õâ¶ÔÓÚÍæ¼Ò×´Ì¬ĞÅÏ¢£¨Èç·ÖÊı¡¢ÉúÃüÖµµÈ£©·Ç³£ÖØÒª£¬ÒòÎªÕâĞ©ĞÅÏ¢ĞèÒª¾¡¿ÉÄÜ¿ìµØ·´Ó³ÔÚ¿Í»§¶ËÉÏ£¬ÒÔÌá¹©¸üºÃµÄÓÎÏ·ÌåÑé¡£
+	// PlayerState é»˜è®¤åŒæ­¥é¢‘ç‡è¾ƒä½ï¼›è¿™é‡Œæé«˜é¢‘ç‡ï¼Œä¿è¯ç©å®¶çŠ¶æ€åœ¨ç½‘ç»œä¸­æ›´æ–°æ›´åŠæ—¶ã€‚
+	NetUpdateFrequency = 100.0f;
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAuraAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
