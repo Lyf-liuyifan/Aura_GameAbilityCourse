@@ -2,19 +2,43 @@
 
 
 #include "UI/HUD/AuraHUD.h"
+#include "UI/WidgetController/AuraOverlayWidgetController.h"
+#include "UI/Widget/AuraUserWidget.h"
 #include "Blueprint/UserWidget.h"
 
-void AAuraHUD::BeginPlay()
+UAuraOverlayWidgetController* AAuraHUD::GetOverlayWidgetController(const FWidgetControllerAttributeParams& WCParams)
 {
-	Super::BeginPlay();
-	//创建小组件
-	if (OverlayWidgetClass)
+	if (OverlayWidgetController == nullptr)
 	{
-		UUserWidget* Widget = CreateWidget<UUserWidget>(GetWorld(), OverlayWidgetClass);
-		if (Widget)
-		{
-			Widget->AddToViewport();
-		}
-	}
-
+		OverlayWidgetController = NewObject<UAuraOverlayWidgetController>(this, OverlayWidgetControllerClass);
+		OverlayWidgetController->SetWidgetController(WCParams);
+		return OverlayWidgetController;
+	}	
+	return OverlayWidgetController;
 }
+
+//鏍规嵁鐜╁鎺у埗鍣紝鐜╁鐘舵�侊紝鑳藉姏绯荤粺缁勪欢锛屽睘鎬ч泦鏉ュ垵濮嬪寲鐣岄潰缁勪欢
+void AAuraHUD::InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS)
+{
+
+	checkf(OverlayWidgetControllerClass, TEXT("OverlayWidgetControllerClass is null! Please assign it in the editor."));
+
+	checkf(OverlayWidgetClass, TEXT("OverlayWidgetClass is null! Please assign it in the editor."));
+
+	
+		UUserWidget* TempWidget = CreateWidget<UUserWidget>(GetWorld(), OverlayWidgetClass);
+		OverlayWidget = Cast<UAuraUserWidget>(TempWidget);
+		
+		FWidgetControllerAttributeParams WidgetControllerParams(PC, PS, ASC, AS);
+		UAuraOverlayWidgetController* WidgetController = GetOverlayWidgetController(WidgetControllerParams);
+		OverlayWidget->SetWidgetController(WidgetController);
+
+		WidgetController->BroadcastInitialValues();
+
+		if (OverlayWidget)
+		{
+			OverlayWidget->AddToViewport();
+		}
+}
+
+

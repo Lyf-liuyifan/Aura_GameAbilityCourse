@@ -7,21 +7,46 @@
 #include "AuraWidgetController.generated.h"
 
 /**
- * ÓÃ»§½çÃæ¿ØÖÆÆ÷»ùÀà£¬Ö÷ÒªÊÇÎªÁË¹ã²¥ÊÂ¼ş¸øÓÃ»§½çÃæ×é¼ş£¬¸Ä±äÓÃ»§½çÃæ×é¼şµÄ×´Ì¬
- * µÃ»ñÈ¡ÓÃ»§×´Ì¬×é¼ş£¬×é¼şÀïÓĞÄÜÁ¦×é¼ş£¬ÄÜÁ¦×é¼şÀïÓĞÊôĞÔ×é¼ş£¬ÊôĞÔ×é¼şÀïÓĞÊôĞÔÖµ£¬½çÃæ¿ØÖÆÆ÷»ñÈ¡ÊôĞÔÖµºó¹ã²¥ÊÂ¼ş¸øÓÃ»§½çÃæ×é¼ş£¬¸Ä±äÓÃ»§½çÃæ×é¼şµÄ×´Ì¬
- * 
+ * ç”¨æˆ·ç•Œé¢æ§åˆ¶å™¨åŸºç±»ï¼Œä¸»è¦æ˜¯ä¸ºäº†å¹¿æ’­äº‹ä»¶ç»™ç”¨æˆ·ç•Œé¢ç»„ä»¶ï¼Œæ”¹å˜ç”¨æˆ·ç•Œé¢ç»„ä»¶çš„çŠ¶æ€
+ * å¾—è·å–ç”¨æˆ·çŠ¶æ€ç»„ä»¶ï¼Œç»„ä»¶é‡Œæœ‰èƒ½åŠ›ç»„ä»¶ï¼Œèƒ½åŠ›ç»„ä»¶é‡Œæœ‰å±æ€§ç»„ä»¶ï¼Œå±æ€§ç»„ä»¶é‡Œæœ‰å±æ€§å€¼ï¼Œç•Œé¢æ§åˆ¶å™¨è·å–å±æ€§å€¼åå¹¿æ’­äº‹ä»¶ç»™ç”¨æˆ·ç•Œé¢ç»„ä»¶ï¼Œæ”¹å˜ç”¨æˆ·ç•Œé¢ç»„ä»¶çš„çŠ¶æ€
+ * ä¸€æ˜¯å¹¿æ’­ç»™UIç»„ä»¶ï¼ŒäºŒæ˜¯éœ€è¦ä»ç”¨æˆ·çŠ¶æ€ç»„ä»¶è·å–å±æ€§å€¼
  */
+
+
 
 class UAbilitySystemComponent;
 class UAttributeSet;
 class PlayerController;
+
+USTRUCT(BlueprintType)
+struct FWidgetControllerAttributeParams
+{
+
+	GENERATED_BODY()
+	FWidgetControllerAttributeParams() = default;
+	FWidgetControllerAttributeParams(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS) :
+		PlayerController(PC), PlayerState(PS), AbilitySystemComponent(ASC), AttributeSet(AS) {
+	}
+
+	TObjectPtr<APlayerController> PlayerController = nullptr;
+	TObjectPtr<APlayerState> PlayerState = nullptr;
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent = nullptr;
+	TObjectPtr<UAttributeSet> AttributeSet = nullptr;
+
+
+};
+
+
+//å‘UIç»„ä»¶è¿›è¡Œå¹¿æ’­äº‹ä»¶ï¼Œæ”¹å˜UIç»„ä»¶çš„çŠ¶æ€
 
 UCLASS()
 class AURA_API UAuraWidgetController : public UObject
 {
 	GENERATED_BODY()
 public:
-
+	UFUNCTION(BlueprintCallable)
+	void SetWidgetController(const FWidgetControllerAttributeParams& WCParams);
+	virtual void BroadcastInitialValues();
 protected:
 	UPROPERTY()
 	TObjectPtr<APlayerController> PlayerController;

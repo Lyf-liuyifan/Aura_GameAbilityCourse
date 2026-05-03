@@ -7,16 +7,22 @@
 #include "AuraHUD.generated.h"
 
 /**
- * ÓÃÀ´»æÖÆÓÃ»§½çÃæ
- * ËùÒÔÒªÓµÓĞÖ¸ÏòÓÃ»§½çÃæ×é¼şµÄÖ¸Õë
- * A.HUDÊÇÒ»¸öActor£¬ËùÒÔËü¿ÉÒÔ·ÅÔÚ¹Ø¿¨Àï£¬»òÕß±»Íæ¼Ò¿ØÖÆÆ÷ÓµÓĞ
- * B.ÓµÓĞÒ»¸ö´ó¿Ø¼ş
- * C.Õâ¸ö´ó¿Ø¼şÀïÓĞºÜ¶àĞ¡¿Ø¼ş
  * 
- * ´´½¨Íê³ÉÔ±ÊôĞÔºó£¬Ë¼¿¼Ë­È¥´´½¨ÕâĞ©×é¼ş£¬ÔÚÄÄÀï´´½¨£¬Ê²Ã´Ê±ºò´´½¨
+ * è¦æ‹¥æœ‰æŒ‡å‘ç”¨æˆ·ç•Œé¢ç»„ä»¶çš„æŒ‡é’ˆ
+ * è´Ÿè´£åˆ›å»ºç”¨æˆ·ç•Œé¢ç»„ä»¶
+ * A.HUDæ˜¯ä¸€ä¸ªActorï¼Œæ‰€ä»¥å®ƒå¯ä»¥æ”¾åœ¨å…³å¡é‡Œï¼Œæˆ–è€…è¢«ç©å®¶æ§åˆ¶å™¨æ‹¥æœ‰
+ * B.æ‹¥æœ‰ä¸€ä¸ªå¤§æ§ä»¶
+ * C.è¿™ä¸ªå¤§æ§ä»¶é‡Œæœ‰å¾ˆå¤šå°æ§ä»¶
+ * 
+ * åˆ›å»ºå®Œæˆå‘˜å±æ€§åï¼Œæ€è€ƒè°å»åˆ›å»ºè¿™äº›ç»„ä»¶ï¼Œåœ¨å“ªé‡Œåˆ›å»ºï¼Œä»€ä¹ˆæ—¶å€™åˆ›å»º
  */
 
 class UUserWidget;
+struct FWidgetControllerAttributeParams;
+class UAuraOverlayWidgetController;
+class UAuraUserWidget;
+class UAbilitySystemComponent;
+class UAttributeSet;
 
 UCLASS()
 class AURA_API AAuraHUD : public AHUD
@@ -24,12 +30,24 @@ class AURA_API AAuraHUD : public AHUD
 	GENERATED_BODY()
 public:
 	UPROPERTY()
-	TObjectPtr<UUserWidget> OverlayWidget;
+	TObjectPtr<UAuraUserWidget> OverlayWidget;
+
+	
+	UAuraOverlayWidgetController* GetOverlayWidgetController(const FWidgetControllerAttributeParams& WCParams);
+
+	//æ ¹æ®ç©å®¶æ§åˆ¶å™¨ï¼Œç©å®¶çŠ¶æ€ï¼Œèƒ½åŠ›ç³»ç»Ÿç»„ä»¶ï¼Œå±æ€§é›†æ¥åˆå§‹åŒ–ç•Œé¢ç»„ä»¶
+	void InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS);
+
 protected:
-	virtual void BeginPlay() override;
 
 private:
-	//ÎÒÃÇ²»ÖªµÀÒª´´½¨µÄÊÇÊ²Ã´×é¼ş£¬ËùÒÔÓÃTSubclassOfÀ´Ö¸¶¨Ò»¸ö×é¼şµÄÀà
-	UPROPERTY(EditAnywhere, Category = "UI")
+	//æˆ‘ä»¬ä¸çŸ¥é“è¦åˆ›å»ºçš„æ˜¯ä»€ä¹ˆç»„ä»¶ï¼Œæ‰€ä»¥ç”¨TSubclassOfæ¥æŒ‡å®šä¸€ä¸ªç»„ä»¶çš„ç±»
+	UPROPERTY(EditAnywhere)
 	TSubclassOf<UUserWidget> OverlayWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UAuraOverlayWidgetController> OverlayWidgetController;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UAuraOverlayWidgetController> OverlayWidgetControllerClass;
 };

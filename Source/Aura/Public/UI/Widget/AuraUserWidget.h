@@ -24,7 +24,7 @@ public:
 
 	//要设置拥有的控制器
 	//以便在蓝图中设置控制器
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SetWidgetController(UObject* InWidgetController);
 
 	/*
@@ -34,6 +34,8 @@ public:
 	//以便蓝图可以访问到用户界面控制器
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UObject> WidgetController;
+
+
 
 protected:
 	//职责是：通知蓝图“控制器已经注入完成，现在可以开始绑定和刷新UI了”
