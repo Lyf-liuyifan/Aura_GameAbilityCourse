@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayEffectTypes.h"
 #include "UI/WidgetController/AuraWidgetController.h"
 #include "AuraOverlayWidgetController.generated.h"
 
@@ -31,6 +32,6 @@ public:
 		FOnMaxHealthChangedSignature OnMaxHealthChanged;
 
 protected:
-	void HealthChanged(const FOnAttributeChangeData& Data)const;
-	void MaxHealthChanged(const FOnAttributeChangeData& Data)const;
+	void HealthChanged(const FOnAttributeChangeData& Data);
+	void MaxHealthChanged(const FOnAttributeChangeData& Data);
 };
