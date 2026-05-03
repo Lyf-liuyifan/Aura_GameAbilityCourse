@@ -12,6 +12,8 @@ UAuraOverlayWidgetController* AAuraHUD::GetOverlayWidgetController(const FWidget
 	{
 		OverlayWidgetController = NewObject<UAuraOverlayWidgetController>(this, OverlayWidgetControllerClass);
 		OverlayWidgetController->SetWidgetController(WCParams);
+		//调用绑定函数，绑定属性改变的事件，当属性值发生改变时，广播事件给UI组件，改变UI组件的状态
+		OverlayWidgetController->BindCallbacksToDependencies();
 		return OverlayWidgetController;
 	}	
 	return OverlayWidgetController;
