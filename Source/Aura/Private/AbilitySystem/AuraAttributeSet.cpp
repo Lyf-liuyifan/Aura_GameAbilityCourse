@@ -41,3 +41,27 @@ void UAuraAttributeSet::OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAuraAttributeSet, MaxMana, OldMaxMana);
 }
+
+void UAuraAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+{
+	if(Attribute == GetHealthAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
+		UE_LOG(LogTemp, Warning, TEXT("Health changed to %f"), NewValue);
+	}
+	else if(Attribute == GetMaxHealthAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 1.f, 9999.f);
+		UE_LOG(LogTemp, Warning, TEXT("MaxHealth changed to %f"), NewValue);
+	}
+	else if(Attribute == GetManaAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxMana());
+		UE_LOG(LogTemp, Warning, TEXT("Mana changed to %f"), NewValue);
+	}
+	else if(Attribute == GetMaxManaAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 1.f, 9999.f);
+		UE_LOG(LogTemp, Warning, TEXT("MaxMana changed to %f"), NewValue);
+	}
+}
