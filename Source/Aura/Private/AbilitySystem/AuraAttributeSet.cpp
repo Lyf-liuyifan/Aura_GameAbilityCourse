@@ -2,6 +2,8 @@
 
 
 #include "AbilitySystem/AuraAttributeSet.h"
+#include "GameFramework/Character.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 UAuraAttributeSet::UAuraAttributeSet()
@@ -65,3 +67,37 @@ void UAuraAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, 
 		UE_LOG(LogTemp, Warning, TEXT("MaxMana changed to %f"), NewValue);
 	}
 }
+
+void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
+{
+	Super::AbortInsideMemberFunction();
+
+	//存储信息以供后续使用，存储了EffectSpec和EvaluatedData以及Target
+	const FGameplayEffectContextHandle Context = Data.EffectSpec.GetContext();
+	const UAbilitySystemComponent* SourceASC = Context.GetInstigatorAbilitySystemComponent();
+	if(IsValid(SourceASC) && SourceASC->AbilityActorInfo.IsValid() && SourceASC->AbilityActorInfo->AvatarActor.IsValid())
+	{
+		AActor* SourceAvatarActor = SourceASC->AbilityActorInfo->AvatarActor.Get();
+		const AController* SourceController = SourceASC->AbilityActorInfo->PlayerController.Get();
+		//如果SourceController为空但SourceAvatarActor有效，尝试从SourceAvatarActor获取控制器
+		if (SourceController == nullptr && SourceAvatarActor != nullptr)
+		{
+			if(APawn* Pawn = Cast<APawn>(SourceAvatarActor))
+			{
+				SourceController = Pawn->GetController();
+			}
+		}
+		if (SourceController != nullptr)
+		{
+			ACharacter* SourceCharacter = Cast<ACharacter>(SourceController->GetPawn());
+		}
+	}
+	if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
+	{
+		AActor* TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
+		AController* TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
+		ACharacter* TargetCharacter = Cast<ACharacter>(TargetAvatarActor);
+		UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetAvatarActor);
+	}
+}
+
