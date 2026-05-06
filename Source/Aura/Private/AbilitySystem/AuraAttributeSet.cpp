@@ -70,12 +70,12 @@ void UAuraAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, 
 
 void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
-	Super::AbortInsideMemberFunction();
+	Super::PostGameplayEffectExecute(Data);
 
 	//存储信息以供后续使用，存储了EffectSpec和EvaluatedData以及Target
 	const FGameplayEffectContextHandle Context = Data.EffectSpec.GetContext();
 	const UAbilitySystemComponent* SourceASC = Context.GetInstigatorAbilitySystemComponent();
-	if(IsValid(SourceASC) && SourceASC->AbilityActorInfo.IsValid() && SourceASC->AbilityActorInfo->AvatarActor.IsValid())
+	if (IsValid(SourceASC) && SourceASC->AbilityActorInfo.IsValid() && SourceASC->AbilityActorInfo->AvatarActor.IsValid())
 	{
 		AActor* SourceAvatarActor = SourceASC->AbilityActorInfo->AvatarActor.Get();
 		const AController* SourceController = SourceASC->AbilityActorInfo->PlayerController.Get();

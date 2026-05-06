@@ -18,6 +18,20 @@
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
 
+USTRUCT(BlueprintType)
+struct FEffectProperties
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	UAbilitySystemComponent* ASC;
+
+	UPROPERTY()
+	AActor* AvatarActor;
+
+
+};
+
 UCLASS()
 class AURA_API UAuraAttributeSet : public UAttributeSet
 {
