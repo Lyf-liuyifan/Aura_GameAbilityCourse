@@ -6,6 +6,7 @@
 #include "AttributeSet.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayEffectExtension.h"
+#include "GameplayEffectTypes.h"
 #include "AuraAttributeSet.generated.h"
 
 /**
@@ -18,18 +19,41 @@
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
 
+
+
 USTRUCT(BlueprintType)
 struct FEffectProperties
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
-	UAbilitySystemComponent* ASC;
+	FEffectProperties() {};
+
+	FGameplayEffectContextHandle EffectContextHandle;
 
 	UPROPERTY()
-	AActor* AvatarActor;
+	UAbilitySystemComponent* SourceASC = nullptr;
 
+	UPROPERTY()
+	AActor* SourceAvatarActor = nullptr;
 
+	UPROPERTY()
+	AController* SourceController = nullptr;
+
+	UPROPERTY()
+	ACharacter* SourceCharacter = nullptr;
+
+	UPROPERTY()
+	UAbilitySystemComponent* TargetASC = nullptr;
+
+	UPROPERTY()
+	AActor* TargetAvatarActor = nullptr;
+
+	UPROPERTY()
+	AController* TargetController = nullptr;
+
+	UPROPERTY()
+	ACharacter* TargetCharacter = nullptr;
+	
 };
 
 UCLASS()
@@ -55,6 +79,7 @@ public:
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+
 	/*
 		PROPERTY
 	*/
@@ -73,4 +98,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_MaxMana)
 	FGameplayAttributeData MaxMana;
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, MaxMana);
+
+private:
+	void SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props);
 };
