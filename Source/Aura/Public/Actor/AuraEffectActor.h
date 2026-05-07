@@ -42,7 +42,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyEffectToTarget(AActor* Target, TSubclassOf<UGameplayEffect> GameEffectClass);
+	void ApplyEffectToTarget(AActor* Target, TSubclassOf<UGameplayEffect> GameEffectClass, float Level);
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveEffectFromTarget(AActor* Target);
@@ -70,6 +70,9 @@ protected:
 	/*End EffectRemovalPolicy*/
 
 	bool bDestroyOnEffectRemoval = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GAS|Attribute")
+	float EffectLevel = 1.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
 	TSubclassOf<UGameplayEffect> InstanceGamePlayEffectClass;

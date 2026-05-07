@@ -25,7 +25,7 @@ void AAuraEffectActor::BeginPlay()
 
 }
 
-void AAuraEffectActor::ApplyEffectToTarget(AActor* Target, TSubclassOf<UGameplayEffect> GameEffectClass)
+void AAuraEffectActor::ApplyEffectToTarget(AActor* Target, TSubclassOf<UGameplayEffect> GameEffectClass, float Level)
 {	
 	//获得目标的ASC组件
 	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Target);
@@ -37,7 +37,7 @@ void AAuraEffectActor::ApplyEffectToTarget(AActor* Target, TSubclassOf<UGameplay
 	//如果ASC组件存在，应用GameplayEffect
 	FGameplayEffectContextHandle EffectContextHandle = TargetASC->MakeEffectContext();
 	EffectContextHandle.AddSourceObject(this);
-	FGameplayEffectSpecHandle EffectSpec = TargetASC->MakeOutgoingSpec(GameEffectClass, 1.f, EffectContextHandle);
+	FGameplayEffectSpecHandle EffectSpec = TargetASC->MakeOutgoingSpec(GameEffectClass, Level, EffectContextHandle);
 	FActiveGameplayEffectHandle ActiveEffectHandle = TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpec.Data.Get());
 
 	const bool bIsInfinite = EffectSpec.Data.Get()->Def.Get()->DurationPolicy == EGameplayEffectDurationType::Infinite;
@@ -79,15 +79,15 @@ void AAuraEffectActor::OnOverlap(AActor* TargetActor)
 	//检查各个策略的应用时机，如果是ApplyOnOverlap则应用效果
 	if (InstantEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnOverlap)
 	{
-		ApplyEffectToTarget(TargetActor, InstanceGamePlayEffectClass);
+		ApplyEffectToTarget(TargetActor, InstanceGamePlayEffectClass, EffectLevel);
 	}
 	if(DurationEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnOverlap)
 	{
-		ApplyEffectToTarget(TargetActor, DurationGamePlayEffectClass);
+		ApplyEffectToTarget(TargetActor, DurationGamePlayEffectClass, EffectLevel);
 	}
 	if (InfiniteEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnOverlap)
 	{
-		ApplyEffectToTarget(TargetActor, InfiniteGamePlayEffectClass);
+		ApplyEffectToTarget(TargetActor, InfiniteGamePlayEffectClass, EffectLevel);
 		UE_LOG(LogTemp, Log, TEXT("Apply Effect On Target Actor"));
 	}
 }
@@ -97,15 +97,15 @@ void AAuraEffectActor::OnEndOverlap(AActor* TargetActor)
 	//检查各个策略的应用时机，如果是ApplyOnEndOverlap则应用效果
 	if (InstantEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnEndOverlap)
 	{
-		ApplyEffectToTarget(TargetActor, InstanceGamePlayEffectClass);
+		ApplyEffectToTarget(TargetActor, InstanceGamePlayEffectClass, EffectLevel);
 	}
 	if (DurationEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnEndOverlap)
 	{
-		ApplyEffectToTarget(TargetActor, DurationGamePlayEffectClass);
+		ApplyEffectToTarget(TargetActor, DurationGamePlayEffectClass, EffectLevel);
 	}
 	if (InfiniteEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnEndOverlap)
 	{
-		ApplyEffectToTarget(TargetActor, InfiniteGamePlayEffectClass);
+		ApplyEffectToTarget(TargetActor, InfiniteGamePlayEffectClass, EffectLevel);
 	}
 	if(InfiniteEffectRemovalPolicy == EEffectRemovalPolicy::RemoveOnEndOverlap)
 	{

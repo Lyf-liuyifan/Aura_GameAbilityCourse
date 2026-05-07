@@ -21,5 +21,5 @@ public:
 
 private:
 	/*AAuraCharacter API*/
-	void InitAbilityActorInfo();
+	virtual void InitAbilityActorInfo() override;
 };

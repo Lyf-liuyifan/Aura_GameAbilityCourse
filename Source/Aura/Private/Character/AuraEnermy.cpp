@@ -46,6 +46,12 @@ void AAuraEnermy::UnHighlightEnermy()
 void AAuraEnermy::BeginPlay()
 {
 	Super::BeginPlay();
+	InitAbilityActorInfo();
+	
+}
 
+void AAuraEnermy::InitAbilityActorInfo()
+{
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	Cast<UAuraAbilitySystemComponent>(GetAbilitySystemComponent())->AbilityActorInfoSet();
 }

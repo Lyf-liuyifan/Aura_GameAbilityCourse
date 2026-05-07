@@ -37,5 +37,5 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class UAttributeSet> AttributeSet;
 
-
+	virtual void InitAbilityActorInfo();
 };
