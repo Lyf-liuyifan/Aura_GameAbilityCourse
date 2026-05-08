@@ -3,6 +3,7 @@
 
 #include "UI/WidgetController/AuraOverlayWidgetController.h"
 #include "AbilitySystem/AuraAttributeSet.h"
+#include "AbilitySystem/AuraAbilitySystemComponent.h"
 
 
 //初始化的时候需要广播属性值给UI组件，改变UI组件的状态
@@ -24,6 +25,30 @@ void UAuraOverlayWidgetController::BindCallbacksToDependencies()
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAuraAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &UAuraOverlayWidgetController::MaxHealthChanged);	
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAuraAttributeSet::GetManaAttribute()).AddUObject(this, &UAuraOverlayWidgetController::ManaChanged);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAuraAttributeSet::GetMaxManaAttribute()).AddUObject(this, &UAuraOverlayWidgetController::MaxManaChanged);
+	if (UAuraAbilitySystemComponent* AuraASC = Cast<UAuraAbilitySystemComponent>(AbilitySystemComponent))
+	{
+		AuraASC->EffectAssetTags.AddLambda([this](const FGameplayTagContainer& TagContainer)
+		{
+			for (const FGameplayTag& Tag : TagContainer)
+			{
+				/**
+				* Determine if this tag matches TagToCheck, expanding our parent tags
+				* "A.1".MatchesTag("A") will return True, "A".MatchesTag("A.1") will return False
+				* If TagToCheck is not Valid it will always return False
+				*
+				* @return True if this tag matches TagToCheck
+				*/
+				UE_LOG(LogTemp,Log,TEXT("GE Tag: %s"), *Tag.ToString());
+				FGameplayTag MessageTag = FGameplayTag::RequestGameplayTag(FName("Message"));
+ 				if (Tag.MatchesTag(MessageTag)) {
+
+					FUIWidgetRow* Row = this->GetDataTableRowByTag<FUIWidgetRow>(MessageDataTable, Tag);
+					MessageWidgetRowDelegate.Broadcast(*Row);
+				}
+				
+			}
+		});
+	}
 }
 
 void UAuraOverlayWidgetController::HealthChanged(const FOnAttributeChangeData& Data)
