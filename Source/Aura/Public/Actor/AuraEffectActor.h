@@ -53,6 +53,12 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void OnEndOverlap(AActor* TargetActor);
 
+	/*
+	
+		PROTECTED UPROPERTY START
+	
+	*/
+
 	/*Start EffectApplicationPolicy*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
 	EEffectApplicationPolicy InstantEffectApplicationPolicy = EEffectApplicationPolicy::DoNotApply;
@@ -84,4 +90,10 @@ protected:
 	TSubclassOf<UGameplayEffect> InfiniteGamePlayEffectClass;
 
 	TMap<FActiveGameplayEffectHandle, UAbilitySystemComponent*> ActiveEffectHandles;
+
+	/*
+
+		PROTECTED UPROPERTY END
+
+	*/
 };
