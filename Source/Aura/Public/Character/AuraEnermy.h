@@ -20,10 +20,12 @@ public:
 	AAuraEnermy();
 	virtual void HighlightEnermy() override;
 	virtual void UnHighlightEnermy() override;
-
-
-
 	/* end Enermy Interface*/
+
+	/* ICombatInterface */
+	virtual int32 GetPlayerLevel() override { return Level; }
+
+	/* End ICombatInterface */
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Interaction")
 	bool bIsHighlighted;
@@ -31,4 +33,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual	void InitAbilityActorInfo() override;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attribute")
+	int32 Level;
 };

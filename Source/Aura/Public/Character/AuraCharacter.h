@@ -16,8 +16,13 @@ class AURA_API AAuraCharacter : public AAuraCharacterBase
 	GENERATED_BODY()
 public:
 	AAuraCharacter();
+
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
+
+	/* ICombatInterface */
+	int32 GetPlayerLevel();
+	/* End ICombatInterface */
 
 private:
 	/*AAuraCharacter API*/

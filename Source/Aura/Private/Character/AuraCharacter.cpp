@@ -67,6 +67,16 @@ void AAuraCharacter::InitAbilityActorInfo()
 		}
 	}
 	//初始化Primary Attributes
-	InitializePrimaryAttributes();
+	//InitializePrimaryAttributes();
+	InitializeDefaultAbilities();
 
+}
+
+int32 AAuraCharacter::GetPlayerLevel()
+{
+	if (AAuraPlayerState* AuraPlayerState = GetPlayerState<AAuraPlayerState>())
+	{
+		return AuraPlayerState->GetPlayerLevel();
+	}
+	return 0;
 }
