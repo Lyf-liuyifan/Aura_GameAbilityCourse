@@ -110,21 +110,22 @@ public:
 	UFUNCTION()
 	void OnRep_ManaRegeneration(const FGameplayAttributeData& OldManaRegeneration);
 
+
+	UFUNCTION()
+	void OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth);
+
+	UFUNCTION()
+	void OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana);
 	/*
 	*	Vital Attribute Functions Start
 	*/
 
 	UFUNCTION()
 	void OnRep_Health(const FGameplayAttributeData& OldHealth);
-
-	UFUNCTION()
-	void OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth);
 	
 	UFUNCTION()
 	void OnRep_Mana(const FGameplayAttributeData& OldMana);
 
-	UFUNCTION()
-	void OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana);
 
 	/*
 	*	Vital Attribute Functions End
