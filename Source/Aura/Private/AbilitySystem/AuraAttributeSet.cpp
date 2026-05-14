@@ -4,26 +4,26 @@
 #include "AbilitySystem/AuraAttributeSet.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AuraGameplayTags.h"
 #include "Net/UnrealNetwork.h"
 
 UAuraAttributeSet::UAuraAttributeSet()
 {
-	// 先给 Max 合理初值，避免「Instant GE 里先 Override Health、后 Override MaxHealth」时
-	// PreAttributeChange 用 GetMaxHealth()==0 把当前血夹成 0。
-	/*InitMaxHealth(100.f);
-	InitMaxMana(100.f);
-	InitHealth(50.f);
-	InitMana(50.f);
+	const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::GetSingletonInstance();
 
-	InitArmor(0.f);
-	InitArmorPenetration(0.f);
-	InitBlockChance(0.f);
-	InitCriticalHitChance(5.f);
-	InitCriticalHitDamage(50.f);
-	InitCriticalHitResistance(0.f);
-	InitHealthRegeneration(0.f);
-	InitManaRegeneration(0.f);*/
+	/*Primary Attributes*/
+	TagsToAttributes.Add(GameplayTags.Attribute_Primary_Strength, GetStrengthAttribute);
+	TagsToAttributes.Add(GameplayTags.Attribute_Primary_Intelligence, GetIntelligenceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attribute_Primary_Resilience, GetResilienceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attribute_Primary_Vigor, GetVigorAttribute);
+
+	/*Secondary Attributes*/
+	TagsToAttributes.Add(GameplayTags.Attribute_Secondary_Armor, GetArmorAttribute);
+
+
+
 }
+
 
 //
 void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

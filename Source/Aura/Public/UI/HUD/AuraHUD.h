@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
+#include "UI/WidgetController/MenuWidgetController.h"
 #include "AuraHUD.generated.h"
 
 /**
@@ -29,25 +30,75 @@ class AURA_API AAuraHUD : public AHUD
 {
 	GENERATED_BODY()
 public:
+	/*
+	* Menu Widget Start
+	*/
+
+	UPROPERTY()
+	TObjectPtr<UAuraUserWidget> MenuWidget;
+	
+	UMenuWidgetController* GetMenuWidgetController(const FWidgetControllerAttributeParams& WCParams);
+
+	void InitMenuWidget(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS);
+	
+	
+	
+	
+	/*
+	* OverlayWidget Start
+	*/
 	UPROPERTY()
 	TObjectPtr<UAuraUserWidget> OverlayWidget;
-
+	
 	
 	UAuraOverlayWidgetController* GetOverlayWidgetController(const FWidgetControllerAttributeParams& WCParams);
-
+	
 	//根据玩家控制器，玩家状态，能力系统组件，属性集来初始化界面组件
 	void InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS);
-
-protected:
-
-private:
+	
+	/*
+	* OverlayWidget End
+	*/
+	
+	protected:
+	
+	private:
+	
+	/*
+	* OverlayWidget Start
+	*/
 	//我们不知道要创建的是什么组件，所以用TSubclassOf来指定一个组件的类
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UUserWidget> OverlayWidgetClass;
-
+	
 	UPROPERTY()
 	TObjectPtr<UAuraOverlayWidgetController> OverlayWidgetController;
-
+	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UAuraOverlayWidgetController> OverlayWidgetControllerClass;
+	
+	/*
+	* OverlayWidget End
+	*/
+
+
+	/*
+	* Menu Widget Start
+	*/
+	UPROPERTY()
+	TObjectPtr<UMenuWidgetController> MenuWidgetController;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UAuraUserWidget> MenuWidgetClass;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UMenuWidgetController> MenuWidgetControllerClass;
+
+	/*
+	* Menu Widget End
+	*/
+
+
+
+
 };

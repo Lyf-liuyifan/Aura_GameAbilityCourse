@@ -20,6 +20,7 @@ void UAuraOverlayWidgetController::BroadcastInitialValues()
 void UAuraOverlayWidgetController::BindCallbacksToDependencies()
 {
 	//当属性值发生改变时，广播事件给UI组件，改变UI组件的状态
+	//ASC侧值改变的时候通知控件控制器,随后控件控制器广播值变化
 	const UAuraAttributeSet* AuraAttributeSet = CastChecked<UAuraAttributeSet>(AttributeSet);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAuraAttributeSet::GetHealthAttribute()).AddUObject(this, &UAuraOverlayWidgetController::HealthChanged);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAuraAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &UAuraOverlayWidgetController::MaxHealthChanged);	

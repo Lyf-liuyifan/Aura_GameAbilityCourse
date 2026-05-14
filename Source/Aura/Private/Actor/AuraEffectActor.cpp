@@ -88,7 +88,6 @@ void AAuraEffectActor::OnOverlap(AActor* TargetActor)
 	if (InfiniteEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnOverlap)
 	{
 		ApplyEffectToTarget(TargetActor, InfiniteGamePlayEffectClass, EffectLevel);
-		UE_LOG(LogTemp, Log, TEXT("Apply Effect On Target Actor"));
 	}
 }
 

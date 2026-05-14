@@ -6,6 +6,11 @@
 
 FAuraGameplayTags FAuraGameplayTags::GameplayTags;
 
+const FAuraGameplayTags& FAuraGameplayTags::GetSingletonInstance()
+{
+	return GameplayTags;
+}
+
 void FAuraGameplayTags::InitializeNativeGameplayTags()
 {
 	/*Vital Attribute Register*/

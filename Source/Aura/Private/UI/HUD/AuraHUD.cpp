@@ -44,3 +44,32 @@ void AAuraHUD::InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySyst
 }
 
 
+UMenuWidgetController* AAuraHUD::GetMenuWidgetController(const FWidgetControllerAttributeParams& WCParams)
+{
+	if (MenuWidgetController == nullptr)
+	{
+		MenuWidgetController = NewObject<UMenuWidgetController>(this, MenuWidgetControllerClass);
+		MenuWidgetController->SetWidgetController(WCParams);
+		MenuWidgetController->BindCallbacksToDependencies();
+		return MenuWidgetController;
+	}
+	return MenuWidgetController;
+}
+
+
+void AAuraHUD::InitMenuWidget(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS)
+{
+	checkf(MenuWidgetControllerClass, TEXT("MenuWidgetControllerClass is null! Please assign it in the editor."));
+	checkf(MenuWidgetClass, TEXT("MenuWidgetClass is null! Please assign it in the editor."));
+
+	UUserWidget* TempWidget = CreateWidget<UUserWidget>(GetWorld(), MenuWidgetClass);
+	MenuWidget = Cast<UAuraUserWidget>(TempWidget);
+
+	FWidgetControllerAttributeParams WidgetControllerParams(PC, PS, ASC, AS);
+	UMenuWidgetController* WidgetController = GetMenuWidgetController(WidgetControllerParams);
+	MenuWidget->SetWidgetController(WidgetController);
+
+	WidgetController->BroadcastInitialValues();
+
+	
+}

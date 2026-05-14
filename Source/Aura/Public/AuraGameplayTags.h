@@ -35,6 +35,8 @@ public:
 	FGameplayTag Attribute_Secondary_MaxHealth;
 
 
+	
+
 protected:
 
 private:
