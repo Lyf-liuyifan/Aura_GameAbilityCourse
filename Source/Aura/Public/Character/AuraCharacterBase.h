@@ -36,7 +36,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	TObjectPtr<USkeletalMeshComponent> Weapon;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 
 	UPROPERTY(BlueprintReadOnly)
@@ -61,4 +61,9 @@ protected:
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level = 1.0f) const;
 
 	void InitializeDefaultAbilities() const;
+
+	void AddCharacterAbilities();
+private:
+	UPROPERTY(EditAnywhere, Category = "CharacterAbility")
+	TArray<TSubclassOf<UGameplayAbility>> CharacterAbilities;
 };

@@ -28,14 +28,15 @@ void AAuraCharacter::PossessedBy(AController* NewController)
 	
 	//Init ability actor info for the server, the client will do this in OnRep_PlayerState
 	InitAbilityActorInfo();
-
-
+	//AddCharacterAbilities();
+	UE_LOG(LogTemp, Log, TEXT("PossessedBy========================="));
 }
 
 void AAuraCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	InitAbilityActorInfo();
+	UE_LOG(LogTemp, Log, TEXT("OnRep_Playerstate Run"));
 }
 
 
@@ -70,7 +71,7 @@ void AAuraCharacter::InitAbilityActorInfo()
 	//初始化Primary Attributes
 	//InitializePrimaryAttributes();
 	InitializeDefaultAbilities();
-
+	AddCharacterAbilities();
 }
 
 int32 AAuraCharacter::GetPlayerLevel()

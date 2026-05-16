@@ -21,6 +21,9 @@ class AURA_API UAuraAbilitySystemComponent : public UAbilitySystemComponent
 public:
 	void AbilityActorInfoSet();
 
+	/*Gameplay Ability API Start*/
+	void AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>> CharacterAbilities);
+	/*Gameplay Ability API End*/
 	FEffectAssetTags EffectAssetTags;
 protected:
 	void EffectApplied(UAbilitySystemComponent* AbilitySystemComponent, const FGameplayEffectSpec& EffectSpec, FActiveGameplayEffectHandle ActiveEffectHandle);
