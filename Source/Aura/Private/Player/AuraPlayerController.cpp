@@ -3,7 +3,12 @@
 
 #include "Player/AuraPlayerController.h"
 #include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
+#include "Input/AuraInputComponent.h"
+#include "AuraGameplayTags.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystem/AuraAbilitySystemComponent.h"
+#include "NavigationPath.h"
+#include "NavigationSystem.h"
 #include "Character/AuraEnermy.h"
 
 
@@ -16,6 +21,8 @@ AAuraPlayerController::AAuraPlayerController()
 	//当前对象被复制时，是否应该复制它的属性。对于玩家控制器来说，通常需要设置为true，以便在网络游戏中正确同步玩家状态和行为。
 	//主要作用就是允许玩家控制器在服务器和客户端之间进行通信和同步，使得玩家的输入、状态和行为能够在网络游戏中正确地反映出来。
 	bReplicates = true;
+
+	Spline = CreateDefaultSubobject<USplineComponent>("Spline");
 
 }
 
@@ -58,7 +65,7 @@ void AAuraPlayerController::BeginPlay()
 	//设置鼠标锁定行为为不锁定，这样玩家的鼠标光标可以自由移动，不会被限制在游戏视口内。
 	InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 	//设置在捕获鼠标时隐藏光标，这样当玩家按下鼠标按钮时，光标会暂时隐藏，以提供更好的游戏体验。
-	InputModeData.SetHideCursorDuringCapture(true);
+	InputModeData.SetHideCursorDuringCapture(false);
 	//应用输入模式设置
 	SetInputMode(InputModeData);
 
@@ -69,8 +76,116 @@ void AAuraPlayerController::SetupInputComponent()
 {
 		Super::SetupInputComponent();
 		//获取玩家输入组件，并将玩家输入事件与相应的函数绑定在一起，以便在游戏中处理玩家的输入行为。
-		UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAuraPlayerController::Move);
+		UAuraInputComponent* AuraInputComponent = CastChecked<UAuraInputComponent>(InputComponent);
+		AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAuraPlayerController::Move);
+		AuraInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputPressed, &ThisClass::AbilityInputReleased, &ThisClass::AbilityInputHeld);
+}
+
+UAuraAbilitySystemComponent* AAuraPlayerController::GetASC()
+{
+	if (AuraAbilitySystemComponent == nullptr)
+	{
+		AuraAbilitySystemComponent = Cast<UAuraAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn()));
+	}
+	return AuraAbilitySystemComponent;
+}
+
+
+
+
+
+//绑定到输入组件的函数
+void AAuraPlayerController::AbilityInputPressed(FGameplayTag InputTag)
+{
+	//GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Red, *InputTag.ToString());
+	if (InputTag.MatchesTagExact(FAuraGameplayTags::GetSingletonInstance().InputTag_LMB))
+	{
+		bIsTargeting = FocusedActor ? true : false;
+		bAutoRunning = false;
+	}
+	
+}
+
+void AAuraPlayerController::AbilityInputReleased(FGameplayTag InputTag)
+{
+	
+
+	if (!InputTag.MatchesTagExact(FAuraGameplayTags::GetSingletonInstance().InputTag_LMB))
+	{
+		bIsTargeting = FocusedActor ? true : false;
+		bAutoRunning = false;
+		if (GetASC())
+		{
+			GetASC()->AbilityInputTagReleased(InputTag);
+		}
+		
+		return;
+	}
+	if (bIsTargeting)
+	{//当鼠标在物体身上时
+		if (GetASC())
+		{
+			GetASC()->AbilityInputTagReleased(InputTag);
+		}
+	}
+	else
+	{
+		APawn* ControlledPawn = GetPawn();
+		if (FollowTime <= ShortThreshold && ControlledPawn)
+		{
+			if (UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, ControlledPawn->GetActorLocation(), CachedDestination)) {
+				Spline->ClearSplinePoints();
+				for (const FVector& PointLoc : NavPath->PathPoints)
+				{
+					Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World);
+					DrawDebugSphere(GetWorld(), PointLoc, 8.f, 8, FColor::Green, false, 5.f);
+				}
+				bAutoRunning = true;
+			}
+		}
+		FollowTime = 0.f;
+		bIsTargeting = false;
+	}
+}
+
+void AAuraPlayerController::AbilityInputHeld(FGameplayTag InputTag)
+{
+
+	if (!InputTag.MatchesTagExact(FAuraGameplayTags::GetSingletonInstance().InputTag_LMB))
+	{
+		bIsTargeting = FocusedActor ? true : false;
+		bAutoRunning = false;
+		if (GetASC()) 
+		{
+			GetASC()->AbilityInputTagHeld(InputTag);
+		}
+		return;
+	}
+	
+	if (bIsTargeting)
+	{//当鼠标在物体身上时
+		if (GetASC())
+		{
+			GetASC()->AbilityInputTagHeld(InputTag);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("Move"));
+		FollowTime += GetWorld()->GetDeltaSeconds();
+
+		FHitResult Hit;
+		if (GetHitResultUnderCursor(ECC_Visibility, false, Hit))
+		{
+			CachedDestination = Hit.ImpactPoint;
+		}
+		if (APawn* ControlledPawn = GetPawn())
+		{
+			const FVector WorlddDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
+			ControlledPawn->AddMovementInput(WorlddDirection);
+		}
+		
+	}
 
 }
 

@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "GameplayTagContainer.h"
+#include "Components/SplineComponent.h"
 #include "AuraPlayerController.generated.h"
 
 /**
@@ -13,9 +15,10 @@ class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
 class IEnermyInterface;
+class UAuraInputConfig;
+class UAuraAbilitySystemComponent;
+class USplineComponent;
 
-// �ҵ�˼·����ҿ���������������룬��������ת�����ƶ���Ϊ��
-// ���� SetupInputComponent ������룬���ڻص������д��������߼���
 
 UCLASS()
 class AURA_API AAuraPlayerController : public APlayerController
@@ -28,7 +31,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	// ��д���������ʼ�����������¼��ʹ���������������
+
 	virtual void SetupInputComponent() override;
 
 
@@ -39,10 +42,36 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> MoveAction;
 
+
+	IEnermyInterface* LastActor;
+	IEnermyInterface* FocusedActor;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UAuraInputConfig> InputConfig;
+
+	UPROPERTY()
+	TObjectPtr<UAuraAbilitySystemComponent> AuraAbilitySystemComponent;
+
+	UAuraAbilitySystemComponent* GetASC();
+
+
+	void AbilityInputPressed(FGameplayTag InputTag);
+	void AbilityInputReleased(FGameplayTag InputTag);
+	void AbilityInputHeld(FGameplayTag InputTag);
+
 	void Move(const FInputActionValue& Value);
 
 	void CursorTrace();
 
-	IEnermyInterface* LastActor;
-	IEnermyInterface* FocusedActor;
+
+	/* Character Move By Cursor Clicked */
+	FVector CachedDestination = FVector::ZeroVector;
+	float FollowTime = 0.f;
+	float ShortThreshold = 0.5f;
+	bool bAutoRunning = false;
+	UPROPERTY(EditDefaultsOnly)
+	float AutoRunAcceptanceRadius = 50.f;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USplineComponent> Spline;
+	bool bIsTargeting = false;
 };
