@@ -45,6 +45,7 @@ private:
 
 	IEnermyInterface* LastActor;
 	IEnermyInterface* FocusedActor;
+	FHitResult CursorHit;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UAuraInputConfig> InputConfig;
@@ -74,4 +75,6 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USplineComponent> Spline;
 	bool bIsTargeting = false;
+
+	void AutoRun();
 };

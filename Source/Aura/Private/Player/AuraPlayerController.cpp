@@ -32,6 +32,8 @@ void AAuraPlayerController::PlayerTick(float DeltaTime)
 
 	CursorTrace();
 
+	AutoRun();
+	
 }
 
 
@@ -138,8 +140,8 @@ void AAuraPlayerController::AbilityInputReleased(FGameplayTag InputTag)
 				for (const FVector& PointLoc : NavPath->PathPoints)
 				{
 					Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World);
-					DrawDebugSphere(GetWorld(), PointLoc, 8.f, 8, FColor::Green, false, 5.f);
 				}
+				CachedDestination = NavPath->PathPoints[NavPath->PathPoints.Num() - 1];
 				bAutoRunning = true;
 			}
 		}
@@ -171,13 +173,12 @@ void AAuraPlayerController::AbilityInputHeld(FGameplayTag InputTag)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Log, TEXT("Move"));
 		FollowTime += GetWorld()->GetDeltaSeconds();
 
-		FHitResult Hit;
-		if (GetHitResultUnderCursor(ECC_Visibility, false, Hit))
+		
+		if (CursorHit.bBlockingHit)
 		{
-			CachedDestination = Hit.ImpactPoint;
+			CachedDestination = CursorHit.ImpactPoint;
 		}
 		if (APawn* ControlledPawn = GetPawn())
 		{
@@ -216,7 +217,7 @@ void AAuraPlayerController::CursorTrace()
 {
 	//获取鼠标下的结果，使用ECC_Visibility通道进行碰撞检测，
 	// 并将结果存储在CursorHit变量中。这样可以检测鼠标指针下是否有可见的对象，并获取相关信息，例如碰撞位置、碰撞对象等。
-	FHitResult CursorHit;
+	
 	GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
 	if (!CursorHit.bBlockingHit) return;
 
@@ -224,51 +225,32 @@ void AAuraPlayerController::CursorTrace()
 	LastActor = FocusedActor;
 	FocusedActor = Cast<IEnermyInterface>(CursorHit.GetActor());
 
-	/*
-	* A.上一个物体空并且当前物体也是空
-	*	- 什么都不做
-	* B.上一个物体空并且当前物体不空
-	*	- 可以触发一个事件，例如显示提示信息或高亮当前物体
-	* C.上一个物体不空并且当前物体为空
-	*	- 可以触发一个事件，例如隐藏提示信息或取消高亮
-	* D.上一个物体不空并且当前物体不空但是是同一个物体
-	* 
-	* E.上一个物体不空并且当前物体不空但是是不同的物体
-	*/
-
-	if (LastActor == nullptr)
+	
+	if (LastActor != FocusedActor)
 	{
-		if (FocusedActor != nullptr)
-		{
-			//B.上一个物体空并且当前物体不空
-			FocusedActor->HighlightEnermy();
-		}else{
-			//A.什么都不做
-		}
-
-
+		if (LastActor) LastActor->UnHighlightEnermy();
+		if (FocusedActor) FocusedActor->HighlightEnermy();
 	}
-	else {//上一个物体不空
-		if(FocusedActor != nullptr)
+	
+
+}
+
+void AAuraPlayerController::AutoRun()
+{
+
+	if (!bAutoRunning) return;
+	if (APawn* ControlledPawn = GetPawn())
+	{
+		const FVector LocationOnSpline = Spline->FindLocationClosestToWorldLocation(ControlledPawn->GetActorLocation(), ESplineCoordinateSpace::World);
+		//在最近的那个点沿切线方向
+		const FVector Direction = Spline->FindDirectionClosestToWorldLocation(LocationOnSpline, ESplineCoordinateSpace::World);
+		ControlledPawn->AddMovementInput(Direction);
+		const float DistanceToDestination = (LocationOnSpline - CachedDestination).Length();
+		if (DistanceToDestination <= AutoRunAcceptanceRadius)
 		{
-			if(LastActor == FocusedActor)
-			{
-				//D.上一个物体不空并且当前物体不空但是是同一个物体
-				return;
-			}
-			else {
-				//E.上一个物体不空并且当前物体不空但是是不同的物体
-				LastActor->UnHighlightEnermy();
-				FocusedActor->HighlightEnermy();
-			}
-			
-		}
-		else {
-			//C.上一个物体不空并且当前物体为空
-			LastActor->UnHighlightEnermy();
+			bAutoRunning = false;
 		}
 	}
-
 }
 
 

@@ -36,6 +36,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	TObjectPtr<USkeletalMeshComponent> Weapon;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	FName WeaponTipSocketName;
+
+	virtual FVector GetCombatSocketLocation()override;
+
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 
@@ -67,3 +72,4 @@ private:
 	UPROPERTY(EditAnywhere, Category = "CharacterAbility")
 	TArray<TSubclassOf<UGameplayAbility>> CharacterAbilities;
 };
+
