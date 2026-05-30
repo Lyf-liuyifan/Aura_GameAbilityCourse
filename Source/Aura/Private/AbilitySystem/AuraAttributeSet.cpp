@@ -25,7 +25,9 @@ UAuraAttributeSet::UAuraAttributeSet()
 }
 
 
-//
+//网络复制，当属性值变化时进行通知复制，
+//`GetLifetimeReplicatedProps` 函数负责复制你使用 `Replicated` 说明符指派的任何属性，并可用于配置属性的复制方式。
+// 这里使用 `Health` 的最基本实现。一旦添加更多需要复制的属性，也必须添加到此函数。
 void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

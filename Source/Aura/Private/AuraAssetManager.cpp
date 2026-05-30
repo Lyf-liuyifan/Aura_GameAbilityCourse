@@ -3,6 +3,7 @@
 
 #include "AuraAssetManager.h"
 #include "GameplayTagsManager.h"
+#include "AbilitySystemGlobals.h"
 #include "AuraGameplayTags.h"
 
 
@@ -18,4 +19,8 @@ void UAuraAssetManager::StartInitialLoading()
 	//
 	Super::StartInitialLoading();
 	FAuraGameplayTags::InitializeNativeGameplayTags();
+
+	//服务器收到客户端发送的数据必须调用的初始化函数
+	UAbilitySystemGlobals::Get().InitGlobalData();
+
 }

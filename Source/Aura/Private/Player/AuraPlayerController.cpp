@@ -154,7 +154,7 @@ void AAuraPlayerController::AbilityInputHeld(FGameplayTag InputTag)
 {
 
 	if (!InputTag.MatchesTagExact(FAuraGameplayTags::GetSingletonInstance().InputTag_LMB))
-	{
+	{//当按下的不是鼠标左键时，直接激活能力
 		bIsTargeting = FocusedActor ? true : false;
 		bAutoRunning = false;
 		if (GetASC()) 
@@ -164,6 +164,7 @@ void AAuraPlayerController::AbilityInputHeld(FGameplayTag InputTag)
 		return;
 	}
 	
+	//当按下的是鼠标左键时，如果鼠标在物体身上
 	if (bIsTargeting)
 	{//当鼠标在物体身上时
 		if (GetASC())
@@ -172,7 +173,7 @@ void AAuraPlayerController::AbilityInputHeld(FGameplayTag InputTag)
 		}
 	}
 	else
-	{
+	{//当鼠标不在物体身上时，持续更新目标位置，并让角色朝着目标位置移动
 		FollowTime += GetWorld()->GetDeltaSeconds();
 
 		

@@ -20,6 +20,9 @@ public:
 
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UFUNCTION(BlueprintCallable)
+	void CastFireBolt(const FVector& ProjectileTargetLocation);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<AAuraProjectile> ProjectileClass;
 };

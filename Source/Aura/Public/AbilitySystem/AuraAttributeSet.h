@@ -70,6 +70,8 @@ public:
 	TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
 
 
+	/* OnRep_Attribute 当属性值变化时所有机器调用此函数 */
+
 	/*
 	*	Primary Attribute Functions
 	* 

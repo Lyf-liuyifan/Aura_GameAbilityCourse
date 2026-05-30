@@ -51,7 +51,7 @@ void UAuraAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& In
 	{
 		if (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag)) {
 			AbilitySpecInputReleased(AbilitySpec);
-			CancelAbilityHandle(AbilitySpec.Handle);
+			//CancelAbilityHandle(AbilitySpec.Handle);
 		}
 	}
 }
