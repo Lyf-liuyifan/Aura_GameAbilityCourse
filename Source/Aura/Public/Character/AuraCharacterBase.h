@@ -20,6 +20,9 @@ class AURA_API AAuraCharacterBase : public ACharacter, public IAbilitySystemInte
 	GENERATED_BODY()
 
 public:
+	/*
+	* 对人物进行初始化设置，比如人物的骨骼，武器属性的初始化（在堆上创建，使属性中指针指向它），包括碰撞预设等
+	*/
 	AAuraCharacterBase();
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;

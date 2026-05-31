@@ -8,12 +8,16 @@
 
 AAuraCharacterBase::AAuraCharacterBase()
 {
+	//允许CharacterActor执行Tick函数
 	PrimaryActorTick.bCanEverTick = true;
 
+	//创建堆上的武器组件，并将其附加到骨骼网格组件的武器插槽上
 	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Weapon"));
 	Weapon->SetupAttachment(GetMesh(), FName("WeaponHandSocket"));
 	Weapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+
+	//设置胶囊体和骨骼的碰撞预设
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECollisionResponse::ECR_Ignore);
 

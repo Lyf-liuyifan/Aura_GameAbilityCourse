@@ -10,7 +10,9 @@
 
 AAuraCharacter::AAuraCharacter()
 {
+	//设置角色的旋转方式，使其朝向移动方向
 	GetCharacterMovement()->bOrientRotationToMovement = true;
+
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 400.f, 0.f);
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
