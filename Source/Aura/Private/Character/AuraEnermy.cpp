@@ -54,4 +54,5 @@ void AAuraEnermy::InitAbilityActorInfo()
 {
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	Cast<UAuraAbilitySystemComponent>(GetAbilitySystemComponent())->AbilityActorInfoSet();
+	InitializeDefaultAbilities();
 }

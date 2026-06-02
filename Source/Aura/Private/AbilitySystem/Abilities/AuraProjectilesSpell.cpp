@@ -4,6 +4,8 @@
 #include "AbilitySystem/Abilities/AuraProjectilesSpell.h"
 #include "Actor/AuraProjectile.h"
 #include "Interaction/CombatInterface.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystem/AuraAbilitySystemComponent.h"
 
 void UAuraProjectilesSpell::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
@@ -35,6 +37,11 @@ void UAuraProjectilesSpell::CastFireBolt(const FVector& ProjectileTargetLocation
 		Cast<APawn>(GetOwningActorFromActorInfo()),
 		ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
+	UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo());
+	
+	Projectile->DamageHandle = SourceASC->MakeOutgoingSpec(DamageEffect, 1.0f, SourceASC->MakeEffectContext());
+
+	//发射物携带了Handle,发射物和目标撞击时触发Effect
 	Projectile->FinishSpawning(SpawnTransform);
 	UE_LOG(LogTemp, Log, TEXT("Activate GA_ProjectileSpell"));
 }

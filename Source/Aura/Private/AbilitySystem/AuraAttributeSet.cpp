@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AuraGameplayTags.h"
+#include "Logging/StructuredLog.h"
 #include "Net/UnrealNetwork.h"
 
 UAuraAttributeSet::UAuraAttributeSet()
@@ -184,6 +185,9 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	{
 		// Handle health-specific logic here
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
+
+		UE_LOGFMT(LogTemp, Log, "Health Changed On {0} To {1}", *Props.SourceAvatarActor->GetName(),GetHealth());
+
 	}
 	if(Data.EvaluatedData.Attribute == GetManaAttribute())
 	{
