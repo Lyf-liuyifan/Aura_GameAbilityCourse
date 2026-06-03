@@ -79,12 +79,20 @@ void AAuraProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
 	if (HasAuthority())
 	{
 		FlySoundComponent->Stop();
-		if (UAbilitySystemComponent* TargetASC = Cast<AAuraCharacterBase>(OtherActor)->GetAbilitySystemComponent())
-		{
-			TargetASC->ApplyGameplayEffectSpecToSelf(*DamageHandle.Data.Get());
-		}
-		Destroy();
 
+		AAuraCharacterBase* TargetCharacter = Cast<AAuraCharacterBase>(OtherActor);
+		if (TargetCharacter)
+		{
+			if (UAbilitySystemComponent* TargetASC = TargetCharacter->GetAbilitySystemComponent())
+			{
+				if (DamageHandle.IsValid() && DamageHandle.Data.IsValid())
+				{
+					TargetASC->ApplyGameplayEffectSpecToTarget(*DamageHandle.Data.Get(), TargetASC);
+				}
+			}
+		}
+
+		Destroy();
 	}
 	else
 	{
