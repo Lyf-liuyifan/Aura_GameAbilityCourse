@@ -36,6 +36,20 @@ void AAuraCharacterBase::ShowCharacterAttribute()
 	}
 }
 
+void AAuraCharacterBase::BindAttributeChangeDelegate()
+{
+
+}
+
+void AAuraCharacterBase::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+	
+}
+
+void AAuraCharacterBase::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
+{
+}
+
 void AAuraCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();

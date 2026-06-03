@@ -30,6 +30,25 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Interaction")
 	bool bIsHighlighted;
 
+	/* UI Interface*/
+
+	virtual void BindAttributeChangeDelegate() override;
+
+	virtual void OnHealthChanged(const FOnAttributeChangeData& Data) override;
+
+	virtual void OnMaxHealthChanged(const FOnAttributeChangeData& Data) override;
+
+	/* UI Interface End*/
+
+
+	/* Animation Interface*/
+
+	/* Animation Interface End*/
+
+	/* Animation Properties */
+	
+	/* Animation Properties End */
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual	void InitAbilityActorInfo() override;

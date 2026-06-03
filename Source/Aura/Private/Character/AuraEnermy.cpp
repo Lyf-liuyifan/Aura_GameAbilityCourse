@@ -5,6 +5,8 @@
 #include "../Aura.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "AbilitySystem/AuraAttributeSet.h"
+#include "UI/Widget/AuraUserWidget.h"
+#include "Components/WidgetComponent.h"
 #include "Components/CapsuleComponent.h"
 
 AAuraEnermy::AAuraEnermy()
@@ -19,9 +21,20 @@ AAuraEnermy::AAuraEnermy()
 	Weapon->SetRenderCustomDepth(false);
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAuraAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	// 能力系统组件需要在网络上进行复制，以便服务器和客户端都能访问它
 	AbilitySystemComponent->SetIsReplicated(true);
 	AttributeSet = CreateDefaultSubobject<UAuraAttributeSet>(TEXT("AttributeSet"));
+	// 设置复制模式为Minimal，这意味着只有必要的数据会被复制，以减少网络带宽的使用
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+
+
+	//把UI组件放在角色身上，UI组件需要从角色身上获取属性变化事件，所以它需要知道角色的ASC组件和AttributeSet
+	HealthBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
+	HealthBar->SetupAttachment(GetRootComponent());
+
+	//GetHitMontage = CreateDefaultSubobject<UAnimMontage>(TEXT("GetHitMontage"));
+
+	BindAttributeChangeDelegate();
 }
 
 void AAuraEnermy::HighlightEnermy()
@@ -42,6 +55,25 @@ void AAuraEnermy::UnHighlightEnermy()
 	GetMesh()->SetRenderCustomDepth(false);
 	Weapon->SetRenderCustomDepth(false);
 }
+
+void AAuraEnermy::BindAttributeChangeDelegate()
+{
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAuraAttributeSet::GetHealthAttribute()).AddUObject(this, &AAuraEnermy::OnHealthChanged);
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAuraAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &AAuraEnermy::OnMaxHealthChanged);
+}
+
+void AAuraEnermy::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+	OnHealthChangedDelegate.Broadcast(Data.NewValue);
+	
+}
+
+void AAuraEnermy::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
+{
+	OnMaxHealthChangedDelegate.Broadcast(Data.NewValue);
+}
+
+
 
 void AAuraEnermy::BeginPlay()
 {

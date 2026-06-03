@@ -49,6 +49,9 @@ public:
 
 	TObjectPtr<UAudioComponent> FlySoundComponent;
 
+	
+
+
 	bool bIsHit = false;
 
 	

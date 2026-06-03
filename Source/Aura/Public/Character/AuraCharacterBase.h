@@ -13,6 +13,10 @@ class UAbilitySystemComponent;
 class UAbilitySystemComponent;
 class UAttributeSet;
 class UGameplayEffect;
+class UWidgetComponent;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedDelegate, float, NewValue);
+
 
 UCLASS(Abstract)
 class AURA_API AAuraCharacterBase : public ACharacter, public IAbilitySystemInterface, public ICombatInterface
@@ -30,6 +34,35 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void ShowCharacterAttribute();
+
+
+	//本身有技能组件挂载在角色上，所以UI只需要从角色身上获得属性变化即可，本身作为一个UI Controller,再广播给UI组件
+	//创造一个委托用于广播属性变化事件，UI组件绑定这个委托，当属性变化时，UI组件就会收到通知，更新UI显示
+	/* UI Interface */
+
+	virtual void BindAttributeChangeDelegate();
+
+	
+	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
+
+	virtual void OnMaxHealthChanged(const FOnAttributeChangeData& Data);
+	/* End Camera Interface */
+
+
+
+
+	/* UI Properties*/
+	UPROPERTY(BlueprintAssignable, Category = "UI Delegate")
+	FOnAttributeChangedDelegate OnHealthChangedDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category = "UI Delegate")
+	FOnAttributeChangedDelegate OnMaxHealthChangedDelegate;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "UI Widget")
+	TObjectPtr<UWidgetComponent> HealthBar;
+
+
+	/* End Camera Properties */
 
 
 protected:
