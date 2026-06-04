@@ -50,6 +50,11 @@ void AAuraCharacterBase::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
 {
 }
 
+void AAuraCharacterBase::GetHitByFire()
+{
+
+}
+
 void AAuraCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();

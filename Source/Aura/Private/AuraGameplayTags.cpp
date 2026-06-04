@@ -37,4 +37,8 @@ void FAuraGameplayTags::InitializeNativeGameplayTags()
 	GameplayTags.InputTag_2 = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("InputTag.2"));
 	GameplayTags.InputTag_3 = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("InputTag.3"));
 	GameplayTags.InputTag_4 = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("InputTag.4"));
+
+	/*HitReact Tag Register*/
+	GameplayTags.GameplayCue_HitReact_Fire = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("GameplayCue.HitReact.Fire"));
+
 }

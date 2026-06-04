@@ -62,8 +62,23 @@ public:
 	TObjectPtr<UWidgetComponent> HealthBar;
 
 
-	/* End Camera Properties */
+	/* End UI Properties */
 
+
+
+
+	/* Animation Interface */
+
+	virtual void GetHitByFire();
+
+
+	/* Animation Properties */
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation|Hit")
+	TObjectPtr<UAnimMontage> GetHitMontage;
+
+	/* End Animation Interface */
+	
 
 protected:
 

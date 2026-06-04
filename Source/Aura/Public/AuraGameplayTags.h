@@ -43,8 +43,8 @@ public:
 	FGameplayTag InputTag_3;
 	FGameplayTag InputTag_4;
 	
-	/*Animation Tag*/
-	
+	/*HitReact Tag*/
+	FGameplayTag GameplayCue_HitReact_Fire;
 
 protected:
 

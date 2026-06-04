@@ -42,6 +42,8 @@ public:
 
 
 	/* Animation Interface*/
+	UFUNCTION(BlueprintCallable)
+	virtual void GetHitByFire() override;
 
 	/* Animation Interface End*/
 

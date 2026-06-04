@@ -73,6 +73,21 @@ void AAuraEnermy::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
 	OnMaxHealthChangedDelegate.Broadcast(Data.NewValue);
 }
 
+void AAuraEnermy::GetHitByFire()
+{
+	if (GetHitMontage)
+	{
+		PlayAnimMontage(GetHitMontage);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("GetHitByFire Montage Class Is Empty"));
+	}
+	return;
+}
+
+
+
 
 
 void AAuraEnermy::BeginPlay()
