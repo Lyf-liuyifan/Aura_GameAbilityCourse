@@ -35,6 +35,8 @@ AAuraEnermy::AAuraEnermy()
 	//GetHitMontage = CreateDefaultSubobject<UAnimMontage>(TEXT("GetHitMontage"));
 
 	BindAttributeChangeDelegate();
+
+
 }
 
 void AAuraEnermy::HighlightEnermy()
@@ -101,5 +103,6 @@ void AAuraEnermy::InitAbilityActorInfo()
 {
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	Cast<UAuraAbilitySystemComponent>(GetAbilitySystemComponent())->AbilityActorInfoSet();
-	InitializeDefaultAbilities();
+	InitAttributeByCharacterInfo();
+	InitializeDefaultAttributes();
 }

@@ -29,7 +29,7 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UAttributeSet> AttributeSet;
 
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing=OnRep_Level)

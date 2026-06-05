@@ -7,6 +7,7 @@
 #include "AbilitySystemInterface.h"
 #include "AbilitySystem/AuraAttributeSet.h"
 #include "Interaction/CombatInterface.h"
+#include "AbilitySystem/Data/CharacterClassInfo.h"
 #include "AuraCharacterBase.generated.h"
 
 class UAbilitySystemComponent;
@@ -14,6 +15,9 @@ class UAbilitySystemComponent;
 class UAttributeSet;
 class UGameplayEffect;
 class UWidgetComponent;
+class UCharacterClassInfo;
+
+
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedDelegate, float, NewValue);
 
@@ -95,7 +99,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class UAttributeSet> AttributeSet;
 
 
@@ -116,9 +120,24 @@ protected:
 
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level = 1.0f) const;
 
-	void InitializeDefaultAbilities() const;
+	void InitializeDefaultAttributes() const;
 
 	void AddCharacterAbilities();
+
+
+
+	/* CharacterClassInfo Interface */
+
+	void InitAttributeByCharacterInfo();
+
+	UPROPERTY(EditDefaultsOnly, Category = "CharacterInfo")
+	TObjectPtr<UCharacterClassInfo>  AttributeInitDataAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CharacterInfo")
+	ECharacterClass CharacterType = ECharacterClass::None;
+
+	/* CharacterClassInfo Interface */
+
 private:
 	UPROPERTY(EditAnywhere, Category = "CharacterAbility")
 	TArray<TSubclassOf<UGameplayAbility>> CharacterAbilities;

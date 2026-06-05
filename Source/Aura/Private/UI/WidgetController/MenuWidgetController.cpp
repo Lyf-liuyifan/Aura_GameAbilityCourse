@@ -40,7 +40,7 @@ void UMenuWidgetController::BindCallbacksToDependencies()
 				FAuraAttributeData ATData = MenuData->FindAttributeDataByTag(Pair.Key);
 				ATData.AttributeValue = Pair.Value().GetNumericValue(AS);
 				MenuDataDelegate.Broadcast(ATData);
-				UE_LOG(LogTemp, Log, TEXT("ValueChange"));
+			
 			}
 		);
 	}

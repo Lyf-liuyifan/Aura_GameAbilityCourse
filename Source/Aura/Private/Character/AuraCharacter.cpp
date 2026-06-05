@@ -72,7 +72,7 @@ void AAuraCharacter::InitAbilityActorInfo()
 	}
 	//初始化Primary Attributes
 	//InitializePrimaryAttributes();
-	InitializeDefaultAbilities();
+	InitializeDefaultAttributes();
 	AddCharacterAbilities();
 }
 

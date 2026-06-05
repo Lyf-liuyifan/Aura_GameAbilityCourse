@@ -21,6 +21,9 @@ AAuraCharacterBase::AAuraCharacterBase()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECollisionResponse::ECR_Ignore);
 
+
+	AttributeInitDataAsset = NewObject<UCharacterClassInfo>();
+
 }
 
 UAbilitySystemComponent* AAuraCharacterBase::GetAbilitySystemComponent() const
@@ -89,10 +92,11 @@ void AAuraCharacterBase::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> Gameplay
 	EffectContextHandle.AddSourceObject(this);
 	FGameplayEffectSpecHandle NewHandle = AbilitySystemComponent->MakeOutgoingSpec(GameplayEffectClass, Level, EffectContextHandle);
 	GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(*NewHandle.Data.Get(), GetAbilitySystemComponent());
+	UE_LOG(LogTemp, Log, TEXT("%s Apply Effect To Self: %s"), *GameplayEffectClass->GetName(), *GetName());
 
 }
 
-void AAuraCharacterBase::InitializeDefaultAbilities() const
+void AAuraCharacterBase::InitializeDefaultAttributes() const
 {
 	ApplyEffectToSelf(DefaultPrimaryAttributes);
 	ApplyEffectToSelf(DefaultSecondaryAttributes);
@@ -103,6 +107,26 @@ void AAuraCharacterBase::AddCharacterAbilities()
 {
 	UAuraAbilitySystemComponent* ASC = CastChecked<UAuraAbilitySystemComponent>(AbilitySystemComponent);
 	ASC->AddCharacterAbilities(CharacterAbilities);
+}
+
+void AAuraCharacterBase::InitAttributeByCharacterInfo()
+{
+	if (AttributeInitDataAsset && CharacterType != ECharacterClass::None)
+	{
+		DefaultPrimaryAttributes = AttributeInitDataAsset->GetDefaultInfoForClass(CharacterType).PrimaryAttributeInitEffect;
+		DefaultSecondaryAttributes = AttributeInitDataAsset->SecondaryAttributeInitEffect;
+		DefaultVitalAttributes = AttributeInitDataAsset->VitalAttributeInitEffect;
+	}
+	else {
+		if(CharacterType == ECharacterClass::None)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("CharacterType is None in %s"), *GetName());
+		}
+		if(!AttributeInitDataAsset)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("AttributeInitDataAsset is not set in %s"), *GetName());
+		}
+	}
 }
 
 
