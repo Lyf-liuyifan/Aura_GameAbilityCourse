@@ -44,7 +44,13 @@ public:
 	/* Animation Interface*/
 	UFUNCTION(BlueprintCallable)
 	virtual void GetHitByFire() override;
+	void GetHitReactByFireBolt(const FGameplayTag CallbackTag, int32 NewCount);
 
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	bool bIsReactingToHit;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	float WalkSpeed = 250.f;
 	/* Animation Interface End*/
 
 	/* Animation Properties */

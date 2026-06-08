@@ -99,8 +99,8 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class UAttributeSet> AttributeSet;
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UAttributeSet> AttributeSet;
 
 
 	UPROPERTY(EditAnywhere,BlueprintReadOnly, Category = "Attribute")

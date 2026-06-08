@@ -7,6 +7,8 @@
 #include "AbilitySystem/AuraAttributeSet.h"
 #include "UI/Widget/AuraUserWidget.h"
 #include "Components/WidgetComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "AuraGameplayTags.h"
 #include "Components/CapsuleComponent.h"
 
 AAuraEnermy::AAuraEnermy()
@@ -92,11 +94,23 @@ void AAuraEnermy::GetHitByFire()
 
 
 
+
+
 void AAuraEnermy::BeginPlay()
 {
 	Super::BeginPlay();
 	InitAbilityActorInfo();
-	
+
+	GetAbilitySystemComponent()->RegisterGameplayTagEvent(FAuraGameplayTags::GetSingletonInstance().Effects_HitReact_FireBolt, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AAuraEnermy::GetHitReactByFireBolt);
+
+}
+
+
+void AAuraEnermy::GetHitReactByFireBolt(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	bIsReactingToHit = NewCount > 0;
+	GetCharacterMovement()->MaxWalkSpeed = bIsReactingToHit ? 0.f : 600.f;
+
 }
 
 void AAuraEnermy::InitAbilityActorInfo()

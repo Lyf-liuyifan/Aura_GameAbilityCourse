@@ -5,6 +5,7 @@
 #include "Actor/AuraProjectile.h"
 #include "Interaction/CombatInterface.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AuraGameplayTags.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 
 void UAuraProjectilesSpell::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -38,8 +39,11 @@ void UAuraProjectilesSpell::CastFireBolt(const FVector& ProjectileTargetLocation
 		ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
 	UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo());
-	
-	Projectile->DamageHandle = SourceASC->MakeOutgoingSpec(DamageEffect, 1.0f, SourceASC->MakeEffectContext());
+	FAuraGameplayTags GameplayTags = FAuraGameplayTags::GetSingletonInstance();
+	auto DamageSpec = SourceASC->MakeOutgoingSpec(DamageEffect, 1.0f, SourceASC->MakeEffectContext());
+	const float DamageValue = Damage.GetValueAtLevel(GetAbilityLevel());
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(DamageSpec, GameplayTags.Damage, DamageValue);
+	Projectile->DamageHandle = DamageSpec;	
 
 	//发射物携带了Handle,发射物和目标撞击时触发Effect
 	Projectile->FinishSpawning(SpawnTransform);

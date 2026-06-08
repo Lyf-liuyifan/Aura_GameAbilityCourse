@@ -194,7 +194,18 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 		// Handle mana-specific logic here
 		SetMana(FMath::Clamp(GetMana(), 0.f, GetMaxMana()));
 	}
+	if(Data.EvaluatedData.Attribute == GetInComingDamageAttribute())
+	{
+		// Handle damage-specific logic here
+		float LocalIncomingDamage = GetInComingDamage();
+		SetInComingDamage(0.f); // Reset incoming damage after processing
+		if (LocalIncomingDamage > 0.f)
+		{
+			SetHealth(FMath::Clamp(GetHealth() - LocalIncomingDamage, 0.f,GetMaxHealth()));
+		}
+	}
 }
+
 
 void UAuraAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props)
 {
