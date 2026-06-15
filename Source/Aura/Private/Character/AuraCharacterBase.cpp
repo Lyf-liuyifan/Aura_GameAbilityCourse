@@ -4,6 +4,7 @@
 #include "Character/AuraCharacterBase.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/WidgetComponent.h"
 #include "AbilitySystem/AuraAttributeSet.h"
 
 AAuraCharacterBase::AAuraCharacterBase()
@@ -39,6 +40,28 @@ void AAuraCharacterBase::ShowCharacterAttribute()
 	}
 }
 
+void AAuraCharacterBase::Die()
+{
+	UE_LOG(LogTemp, Log, TEXT("%s has died."), *GetName());
+	MulticastOnDeath();
+}
+
+void AAuraCharacterBase::MulticastOnDeath_Implementation()
+{
+	Weapon->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
+	Weapon->SetSimulatePhysics(true);
+	Weapon->SetEnableGravity(true);
+	Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->SetEnableGravity(true);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Dissolve();
+	HealthBar->SetVisibility(false);
+}
+
 void AAuraCharacterBase::BindAttributeChangeDelegate()
 {
 
@@ -56,6 +79,27 @@ void AAuraCharacterBase::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
 void AAuraCharacterBase::GetHitByFire()
 {
 
+}
+
+UAnimMontage* AAuraCharacterBase::GetHitReactAnimationMontage_Implementation()
+{
+	return HitReactMontage;
+}
+
+void AAuraCharacterBase::Dissolve()
+{
+	if(IsValid(DissolveMaterialInstance))
+	{
+		UMaterialInstanceDynamic* DynamicMaterial = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
+		GetMesh()->SetMaterial(0, DynamicMaterial);
+		StartDissolveTimeline(DynamicMaterial);
+	}
+	if(IsValid(WeaponDissolveMaterialInstance))
+	{
+		UMaterialInstanceDynamic* DynamicMaterial = UMaterialInstanceDynamic::Create(WeaponDissolveMaterialInstance, this);
+		Weapon->SetMaterial(0, DynamicMaterial);
+		StartWeaponDissolveTimeline(DynamicMaterial);
+	}
 }
 
 void AAuraCharacterBase::BeginPlay()

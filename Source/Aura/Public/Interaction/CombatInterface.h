@@ -25,4 +25,9 @@ public:
 
 	virtual int32 GetPlayerLevel();
 	virtual FVector GetCombatSocketLocation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	UAnimMontage* GetHitReactAnimationMontage();
+
+	virtual void Die();
 };

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "CharacterClassInfo.generated.h"
 
 class UGameplayEffect;
@@ -26,6 +27,7 @@ struct FCharacterClassDefaultInfo
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Class Defaults")
 	TSubclassOf<UGameplayEffect> PrimaryAttributeInitEffect;
+
 };
 
 /**
@@ -45,6 +47,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Common Class Defaults")
 	TSubclassOf<UGameplayEffect> VitalAttributeInitEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Common Class Defaults")
+	TArray<TSubclassOf<UGameplayAbility>> CommonAbilities;
 
 	FCharacterClassDefaultInfo GetDefaultInfoForClass(ECharacterClass CharacterClass) const;
 };

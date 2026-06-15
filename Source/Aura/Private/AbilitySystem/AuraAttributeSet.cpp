@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AuraGameplayTags.h"
+#include "Character/AuraCharacterBase.h"
 #include "Logging/StructuredLog.h"
 #include "Net/UnrealNetwork.h"
 
@@ -199,9 +200,21 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 		// Handle damage-specific logic here
 		float LocalIncomingDamage = GetInComingDamage();
 		SetInComingDamage(0.f); // Reset incoming damage after processing
+		float CurrentHealth = GetHealth() - LocalIncomingDamage;
 		if (LocalIncomingDamage > 0.f)
 		{
-			SetHealth(FMath::Clamp(GetHealth() - LocalIncomingDamage, 0.f,GetMaxHealth()));
+			SetHealth(FMath::Clamp(CurrentHealth, 0.f, GetMaxHealth()));
+			if(CurrentHealth <= 0.f)
+			{
+				//应用死亡效果，例如播放死亡动画、触发死亡事件等
+				UE_LOGFMT(LogTemp, Log, "{0} has been killed by {1}", *Props.TargetAvatarActor->GetName(), *Props.SourceAvatarActor->GetName());
+				Cast<ICombatInterface>(Props.TargetAvatarActor)->Die();
+				// Handle death logic here (e.g., trigger death events, play animations, etc.)
+			}else
+			{
+				//应用受伤效果，例如播放受伤动画、触发受伤事件等
+				Props.TargetASC->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag(FName("Effects.HitReact"))));
+			}
 		}
 	}
 }

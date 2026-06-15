@@ -45,11 +45,14 @@ public:
 	
 	/*HitReact Tag*/
 	FGameplayTag GameplayCue_HitReact_Fire;
-	FGameplayTag Effects_HitReact_FireBolt;
+	FGameplayTag Effects_HitReact;
 
 
 	/* Damage Tags*/
 	FGameplayTag Damage;
+
+	/* Actor Tags */
+	FGameplayTag Actor_FireBolt;
 
 protected:
 

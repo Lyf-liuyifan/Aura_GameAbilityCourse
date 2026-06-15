@@ -23,4 +23,6 @@ public:
 	
 	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibary|WidgetConroller")
 	static UMenuWidgetController* GetAttributeMenuWidgetController(const UObject* WorldContextObject);
+
+	static void AddCharacterAbilities(UObject* WorldContextObject, UAbilitySystemComponent* ASC);
 };

@@ -40,9 +40,13 @@ void FAuraGameplayTags::InitializeNativeGameplayTags()
 
 	/*HitReact Tag Register*/
 	GameplayTags.GameplayCue_HitReact_Fire = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("GameplayCue.HitReact.Fire"));
-	GameplayTags.Effects_HitReact_FireBolt = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Effects.HitReact.FireBolt"));
+	GameplayTags.Effects_HitReact = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Effects.HitReact"));
 
 	/* Damage Tag Register*/
 	GameplayTags.Damage = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Damage"));
+
+	/* Actor Tag Register*/
+	GameplayTags.Actor_FireBolt = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Actor.FireBolt"));
+
 
 }

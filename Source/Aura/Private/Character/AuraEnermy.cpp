@@ -9,6 +9,7 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AuraGameplayTags.h"
+#include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "Components/CapsuleComponent.h"
 
 AAuraEnermy::AAuraEnermy()
@@ -60,6 +61,13 @@ void AAuraEnermy::UnHighlightEnermy()
 	Weapon->SetRenderCustomDepth(false);
 }
 
+void AAuraEnermy::Die()
+{
+	SetLifeSpan(DeathLifeSpan);
+	Super::Die();
+	
+}
+
 void AAuraEnermy::BindAttributeChangeDelegate()
 {
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAuraAttributeSet::GetHealthAttribute()).AddUObject(this, &AAuraEnermy::OnHealthChanged);
@@ -77,18 +85,7 @@ void AAuraEnermy::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
 	OnMaxHealthChangedDelegate.Broadcast(Data.NewValue);
 }
 
-void AAuraEnermy::GetHitByFire()
-{
-	if (GetHitMontage)
-	{
-		PlayAnimMontage(GetHitMontage);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("GetHitByFire Montage Class Is Empty"));
-	}
-	return;
-}
+
 
 
 
@@ -101,17 +98,21 @@ void AAuraEnermy::BeginPlay()
 	Super::BeginPlay();
 	InitAbilityActorInfo();
 
-	GetAbilitySystemComponent()->RegisterGameplayTagEvent(FAuraGameplayTags::GetSingletonInstance().Effects_HitReact_FireBolt, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AAuraEnermy::GetHitReactByFireBolt);
-
+	GetAbilitySystemComponent()->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(FName("Effects.HitReact")), EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AAuraEnermy::GetHitReact);
+	UAuraAbilitySystemLibrary::AddCharacterAbilities(this, GetAbilitySystemComponent());
 }
 
 
-void AAuraEnermy::GetHitReactByFireBolt(const FGameplayTag CallbackTag, int32 NewCount)
+void AAuraEnermy::GetHitReact(const FGameplayTag CallbackTag, int32 NewCount)
 {
 	bIsReactingToHit = NewCount > 0;
-	GetCharacterMovement()->MaxWalkSpeed = bIsReactingToHit ? 0.f : 600.f;
+	GetCharacterMovement()->MaxWalkSpeed = bIsReactingToHit ? 0.f : WalkSpeed;
 
+	//激活受击能力
+	GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag(FName("Effects.HitReact"))));
 }
+
+
 
 void AAuraEnermy::InitAbilityActorInfo()
 {

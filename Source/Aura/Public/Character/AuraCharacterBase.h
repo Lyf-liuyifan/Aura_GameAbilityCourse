@@ -39,6 +39,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void ShowCharacterAttribute();
 
+	virtual void Die() override;
+	
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastOnDeath();
+
 
 	//本身有技能组件挂载在角色上，所以UI只需要从角色身上获得属性变化即可，本身作为一个UI Controller,再广播给UI组件
 	//创造一个委托用于广播属性变化事件，UI组件绑定这个委托，当属性变化时，UI组件就会收到通知，更新UI显示
@@ -79,9 +84,31 @@ public:
 	/* Animation Properties */
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation|Hit")
-	TObjectPtr<UAnimMontage> GetHitMontage;
+	TObjectPtr<UAnimMontage> HitReactMontage;
+
+
+	UAnimMontage* GetHitReactAnimationMontage_Implementation();
 
 	/* End Animation Interface */
+	
+
+	/* Material Interface */
+
+	void Dissolve();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartDissolveTimeline(UMaterialInstanceDynamic* DynamicMaterial);
+
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartWeaponDissolveTimeline(UMaterialInstanceDynamic* DynamicMaterial);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Material")
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Material")
+	TObjectPtr<UMaterialInstance> WeaponDissolveMaterialInstance;
+
 	
 
 protected:

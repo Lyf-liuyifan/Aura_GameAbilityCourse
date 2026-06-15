@@ -24,6 +24,10 @@ public:
 
 	/* ICombatInterface */
 	virtual int32 GetPlayerLevel() override { return Level; }
+	virtual void Die() override;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float DeathLifeSpan = 5.f;
 
 	/* End ICombatInterface */
 
@@ -43,14 +47,16 @@ public:
 
 	/* Animation Interface*/
 	UFUNCTION(BlueprintCallable)
-	virtual void GetHitByFire() override;
-	void GetHitReactByFireBolt(const FGameplayTag CallbackTag, int32 NewCount);
+	void GetHitReact(const FGameplayTag CallbackTag, int32 NewCount);
 
 	UPROPERTY(BlueprintReadOnly, Category = "Combat")
 	bool bIsReactingToHit;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Combat")
 	float WalkSpeed = 250.f;
+
+
+
 	/* Animation Interface End*/
 
 	/* Animation Properties */
