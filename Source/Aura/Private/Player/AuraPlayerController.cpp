@@ -9,6 +9,8 @@
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
+#include "UI/Widget/DamageTextWidgetComponent.h"
+#include "GameFramework/Character.h"
 #include "Character/AuraEnermy.h"
 
 
@@ -35,6 +37,19 @@ void AAuraPlayerController::PlayerTick(float DeltaTime)
 	AutoRun();
 	
 }
+
+
+void AAuraPlayerController::BroadcastDamageText_Implementation(const float DamageValue, ACharacter* HitCharacter, bool bIsCriticalHit, bool bIsBlockedHit)
+{
+	if (DamageTextWidgetComponent && IsValid(HitCharacter))
+	{
+		UDamageTextWidgetComponent* DamageTextCom = NewObject<UDamageTextWidgetComponent>(HitCharacter, DamageTextWidgetComponent);
+		DamageTextCom->RegisterComponent();
+		DamageTextCom->AttachToComponent(HitCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+		DamageTextCom->SetDamageText(DamageValue, bIsCriticalHit, bIsBlockedHit);
+	}
+}
+
 
 
 //输入系统就绪（拿 Subsystem + 加 MappingContext）

@@ -18,6 +18,7 @@ class IEnermyInterface;
 class UAuraInputConfig;
 class UAuraAbilitySystemComponent;
 class USplineComponent;
+class UDamageTextWidgetComponent;
 
 
 UCLASS()
@@ -28,6 +29,15 @@ class AURA_API AAuraPlayerController : public APlayerController
 public:
 	AAuraPlayerController();
 	virtual void PlayerTick(float DeltaTime) override;
+
+	/* Damage Text */
+	UPROPERTY(EditDefaultsOnly, Category = "UI", BlueprintReadOnly)
+	TSubclassOf<UDamageTextWidgetComponent> DamageTextWidgetComponent;
+
+	UFUNCTION(Client, Reliable)
+	void BroadcastDamageText(const float DamageValue, ACharacter* HitCharacter, bool bIsCriticalHit, bool bIsBlockedHit);
+
+
 
 protected:
 	virtual void BeginPlay() override;

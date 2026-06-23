@@ -4,7 +4,10 @@
 #include "AbilitySystem/AuraAttributeSet.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystem/AuraAbilityTypes.h"
 #include "AuraGameplayTags.h"
+#include "GameFramework/Character.h"
+#include "Player/AuraPlayerController.h"
 #include "Character/AuraCharacterBase.h"
 #include "Logging/StructuredLog.h"
 #include "Net/UnrealNetwork.h"
@@ -21,6 +24,15 @@ UAuraAttributeSet::UAuraAttributeSet()
 
 	/*Secondary Attributes*/
 	TagsToAttributes.Add(GameplayTags.Attribute_Secondary_Armor, GetArmorAttribute);
+	TagsToAttributes.Add(GameplayTags.Attribute_Secondary_MaxMana, GetMaxManaAttribute);
+	TagsToAttributes.Add(GameplayTags.Attribute_Secondary_MaxHealth, GetMaxHealthAttribute);
+	TagsToAttributes.Add(GameplayTags.Attribute_Secondary_ArmorPenetration, GetArmorPenetrationAttribute);
+	TagsToAttributes.Add(GameplayTags.Attribute_Secondary_BlockChance, GetBlockChanceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attribute_Secondary_CriticalHitChance, GetCriticalHitChanceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attribute_Secondary_CriticalHitDamage, GetCriticalHitDamageAttribute);
+	TagsToAttributes.Add(GameplayTags.Attribute_Secondary_CriticalHitResistance, GetCriticalHitResistanceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attribute_Secondary_HealthRegeneration, GetHealthRegenerationAttribute);
+	TagsToAttributes.Add(GameplayTags.Attribute_Secondary_ManaRegeneration, GetManaRegenerationAttribute);
 
 
 
@@ -215,6 +227,32 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 				//应用受伤效果，例如播放受伤动画、触发受伤事件等
 				Props.TargetASC->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag(FName("Effects.HitReact"))));
 			}
+
+			//播放收到伤害文本
+			if(Props.TargetCharacter != nullptr)
+			{
+				bool bIsCriticalHit = false;
+				bool bIsBlockedHit = false;
+				if (const FGameplayEffectContext* Context = Props.EffectContextHandle.Get())
+				{
+					if (Context->GetScriptStruct() == FAuraGameplayEffectContext::StaticStruct())
+					{
+						const FAuraGameplayEffectContext* AuraContext = static_cast<const FAuraGameplayEffectContext*>(Context);
+						bIsCriticalHit = AuraContext->IsCriticalHit();
+						bIsBlockedHit = AuraContext->IsBlockedHit();
+					}
+				}
+
+				if (AAuraPlayerController* PC = Cast<AAuraPlayerController>(Props.SourceController))
+				{
+					PC->BroadcastDamageText(LocalIncomingDamage, Props.TargetCharacter, bIsCriticalHit, bIsBlockedHit);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Log, TEXT("TargetController is Empty"));
+				}
+			}
+
 		}
 	}
 }
@@ -239,7 +277,7 @@ void UAuraAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData
 		}
 		if (Props.SourceController != nullptr)
 		{
-			ACharacter* SourceCharacter = Cast<ACharacter>(Props.SourceController->GetPawn());
+			Props.SourceCharacter = Cast<ACharacter>(Props.SourceController->GetPawn());
 		}
 	}
 	if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
