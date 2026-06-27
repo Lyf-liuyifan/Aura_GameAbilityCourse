@@ -25,6 +25,7 @@ void AAuraEnermy::PossessedBy(AController* NewController)
 	{
 		AuraAIController->GetBlackboardComponent()->InitializeBlackboard(*BehaviorTree->BlackboardAsset);
 		AuraAIController->RunBehaviorTree(BehaviorTree);
+		UE_LOG(LogTemp, Log, TEXT("AuraEnermy [%s]: Behavior Tree started (%s)."), *GetName(), *BehaviorTree->GetName());
 	}
 	else
 	{
