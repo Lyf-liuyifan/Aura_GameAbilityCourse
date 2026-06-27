@@ -98,6 +98,8 @@ void UDamageExecutionCalculation::Execute_Implementation(const FGameplayEffectCu
 	const bool bIsBlocked = FMath::RandRange(1, 100) < TargetBlockChance;
 	Damage = bIsBlocked ? Damage * DamageStatics().BlockDamageReductionPercent : Damage;
 
+
+
 	// 4. 护甲减伤：穿透先按比例削减目标护甲，再用有效护甲降低最终伤害
 	float TargetArmor = 0.f;
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().ArmorDef, EvaluationParameters, TargetArmor);
@@ -113,6 +115,8 @@ void UDamageExecutionCalculation::Execute_Implementation(const FGameplayEffectCu
 	// 每 1 点有效护甲提供约 ArmorReductionPercent% 减伤（300 护甲约减 100% 伤害）
 	Damage *= (100.f - EffectiveArmor * DamageStatics().ArmorReductionPercent) / 100.f;
 
+
+	//把信息传递给context
 	FGameplayEffectContextHandle EffectContextHandle = Spec.GetContext();
 	FAuraGameplayEffectContext* AuraContext = FAuraGameplayEffectContext::ExtractEffectContext(EffectContextHandle);
 	AuraContext->SetIsCriticalHit(bCriticalHit);

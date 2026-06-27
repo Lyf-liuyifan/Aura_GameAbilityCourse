@@ -63,9 +63,12 @@ void AAuraPlayerController::BeginPlay()
 	//调用父类的BeginPlay函数，确保父类的初始化逻辑能够正确执行。这是一个常见的做法，可以确保在子类中添加的逻辑不会干扰父类的正常功能。
 	Super::BeginPlay();
 
-	check(AuraContext);
+	if (!AuraContext)
+	{
+		UE_LOG(LogTemp, Error, TEXT("AuraPlayerController [%s]: AuraContext is not set. Assign Input Mapping Context in BP_AuraPlayerController Class Defaults."), *GetName());
+		return;
+	}
 
-	//获取当前玩家控制器所属的本地玩家子系统，并将输入映射上下文添加到该子系统中。输入映射上下文定义了玩家输入与游戏行为之间的映射关系，确保玩家的输入能够正确地被识别和处理。
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
 
 	if (Subsystem)
@@ -91,11 +94,22 @@ void AAuraPlayerController::BeginPlay()
 
 void AAuraPlayerController::SetupInputComponent()
 {
-		Super::SetupInputComponent();
-		//获取玩家输入组件，并将玩家输入事件与相应的函数绑定在一起，以便在游戏中处理玩家的输入行为。
-		UAuraInputComponent* AuraInputComponent = CastChecked<UAuraInputComponent>(InputComponent);
-		AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAuraPlayerController::Move);
-		AuraInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputPressed, &ThisClass::AbilityInputReleased, &ThisClass::AbilityInputHeld);
+	Super::SetupInputComponent();
+
+	if (!MoveAction)
+	{
+		UE_LOG(LogTemp, Error, TEXT("AuraPlayerController [%s]: MoveAction is not set. Assign in BP_AuraPlayerController Class Defaults."), *GetName());
+		return;
+	}
+	if (!InputConfig)
+	{
+		UE_LOG(LogTemp, Error, TEXT("AuraPlayerController [%s]: InputConfig is not set. Assign in BP_AuraPlayerController Class Defaults."), *GetName());
+		return;
+	}
+
+	UAuraInputComponent* AuraInputComponent = CastChecked<UAuraInputComponent>(InputComponent);
+	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAuraPlayerController::Move);
+	AuraInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputPressed, &ThisClass::AbilityInputReleased, &ThisClass::AbilityInputHeld);
 }
 
 UAuraAbilitySystemComponent* AAuraPlayerController::GetASC()

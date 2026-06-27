@@ -25,4 +25,17 @@ public:
 	static UMenuWidgetController* GetAttributeMenuWidgetController(const UObject* WorldContextObject);
 
 	static void AddCharacterAbilities(UObject* WorldContextObject, UAbilitySystemComponent* ASC);
+
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibary|GameplayEffects")
+	static bool IsBlockedHit(const FGameplayEffectContextHandle& EffectContextHandle);
+
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibary|GameplayEffects")
+	static bool IsCriticalHit(const FGameplayEffectContextHandle& EffectContextHandle);
+
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibary|GameplayEffects")
+	static void SetIsBlockedHit(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsBlockedHit);
+
+
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibary|GameplayEffects")
+	static void SetIsCraticalHit(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsCriticalHit);
 };

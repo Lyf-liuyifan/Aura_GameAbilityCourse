@@ -7,6 +7,10 @@
 #include "Interaction/EnermyInterface.h"
 #include "AuraEnermy.generated.h"
 
+
+class UBlackboardComponent;
+class AAuraAIController;
+class UBehaviorTree;
 /**
  * 
  */
@@ -15,6 +19,8 @@ class AURA_API AAuraEnermy : public AAuraCharacterBase, public IEnermyInterface
 {
 	GENERATED_BODY()
 public:
+
+	virtual void PossessedBy(AController* NewController)override;
 
 	/* Enermy Interface*/
 	AAuraEnermy();
@@ -63,10 +69,22 @@ public:
 	
 	/* Animation Properties End */
 	
+	/* AI */
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
+	TObjectPtr<UBehaviorTree> BehaviorTree;
+
+	UPROPERTY()
+	TObjectPtr<AAuraAIController> AuraAIController;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual	void InitAbilityActorInfo() override;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attribute")
 	int32 Level;
+
+	
+
 };

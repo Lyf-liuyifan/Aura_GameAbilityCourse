@@ -2,6 +2,7 @@
 
 
 #include "Character/AuraEnermy.h"
+#include "AI/AuraAIController.h"
 #include "../Aura.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "AbilitySystem/AuraAttributeSet.h"
@@ -11,6 +12,26 @@
 #include "AuraGameplayTags.h"
 #include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "Components/CapsuleComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "BehaviorTree/BehaviorTree.h"
+
+void AAuraEnermy::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	if (!HasAuthority()) return;
+	AuraAIController = Cast<AAuraAIController>(NewController);
+
+	if (AuraAIController && BehaviorTree)
+	{
+		AuraAIController->GetBlackboardComponent()->InitializeBlackboard(*BehaviorTree->BlackboardAsset);
+		AuraAIController->RunBehaviorTree(BehaviorTree);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AuraEnermy [%s]: AI not started. AuraAIController=%d BehaviorTree=%d. Set AI Controller + Behavior Tree on enemy blueprint."),
+			*GetName(), AuraAIController != nullptr, BehaviorTree != nullptr);
+	}
+}
 
 AAuraEnermy::AAuraEnermy()
 {

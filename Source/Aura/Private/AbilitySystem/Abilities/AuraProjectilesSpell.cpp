@@ -5,9 +5,6 @@
 #include "Actor/AuraProjectile.h"
 #include "Interaction/CombatInterface.h"
 #include "AbilitySystemBlueprintLibrary.h"
-#include "AuraGameplayTags.h"
-#include "AbilitySystem/AuraAbilitySystemComponent.h"
-#include "AbilitySystem/AuraAbilityTypes.h"
 
 void UAuraProjectilesSpell::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
@@ -40,15 +37,7 @@ void UAuraProjectilesSpell::CastFireBolt(const FVector& ProjectileTargetLocation
 		ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
 	UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo());
-	FAuraGameplayTags GameplayTags = FAuraGameplayTags::GetSingletonInstance();
-	FGameplayEffectContextHandle EffectContextHandle = SourceASC->MakeEffectContext();
-	EffectContextHandle.AddSourceObject(Projectile);
-	FAuraGameplayEffectContext* AuraContext = FAuraGameplayEffectContext::ExtractEffectContext(EffectContextHandle);
-	AuraContext->SetDamageType(GameplayTags.Damage_Fire);
-	auto DamageSpec = SourceASC->MakeOutgoingSpec(DamageEffect, 1.0f, EffectContextHandle);
-	const float DamageValue = Damage.GetValueAtLevel(GetAbilityLevel());
-	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(DamageSpec, GameplayTags.Damage, DamageValue);
-	Projectile->DamageHandle = DamageSpec;	
+	Projectile->DamageHandle = MakeDamageEffectSpec(SourceASC, DamageEffect, Projectile);	
 
 	//发射物携带了Handle,发射物和目标撞击时触发Effect
 	Projectile->FinishSpawning(SpawnTransform);
