@@ -61,6 +61,11 @@ AAuraEnermy::AAuraEnermy()
 
 	BindAttributeChangeDelegate();
 
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+
 
 }
 
@@ -127,8 +132,8 @@ void AAuraEnermy::BeginPlay()
 
 void AAuraEnermy::GetHitReact(const FGameplayTag CallbackTag, int32 NewCount)
 {
-	bIsReactingToHit = NewCount > 0;
-	GetCharacterMovement()->MaxWalkSpeed = bIsReactingToHit ? 0.f : WalkSpeed;
+	/*bIsReactingToHit = NewCount > 0;
+	GetCharacterMovement()->MaxWalkSpeed = bIsReactingToHit ? 0.f : WalkSpeed;*/
 
 	//激活受击能力
 	GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag(FName("Effects.HitReact"))));
