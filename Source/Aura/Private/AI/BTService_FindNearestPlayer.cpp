@@ -53,7 +53,7 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 
 	const FVector Forward = MyPawn->GetActorForwardVector();
 	const float CosHalfAngle = FMath::Cos(FMath::DegreesToRadians(HalfSightAngle));
-
+	Blackboard->SetValueAsVector(BlackboardKeyLastLocation.SelectedKeyName, LastLocation);
 	if (bHit)
 	{
 		for (AActor* Actor : OverlappedActors)
@@ -86,7 +86,7 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 
 	if (NearestPlayer)
 	{
-		Blackboard->SetValueAsObject(BlackboardKeyTargetActor.SelectedKeyName, NearestPlayer);
+		Blackboard->SetValueAsObject(BlackboardKeyTargetToFollow.SelectedKeyName, NearestPlayer);
 
 		if (!BlackboardKeyHasValidTarget.SelectedKeyName.IsNone())
 		{
@@ -96,6 +96,7 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 		if (!bIsMelee && !BlackboardKeyLocationFarFromTarget.SelectedKeyName.IsNone())
 		{
 			const FVector PlayerLocation = NearestPlayer->GetActorLocation();
+			LastLocation = PlayerLocation;
 			if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetNavigationSystem(GetWorld()))
 			{
 				const FVector Direction = (MyLocation - PlayerLocation).GetSafeNormal();
@@ -105,12 +106,22 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 				{
 					Blackboard->SetValueAsVector(BlackboardKeyLocationFarFromTarget.SelectedKeyName, NavLocation.Location);
 				}
+				bool isTooCloest = true;
+				float Distance = FVector::Distance(MyLocation, PlayerLocation);
+				if (Distance < AttackDistance)
+				{//太近
+					Blackboard->SetValueAsBool(BlackboardKeybNeedsToRetreat.SelectedKeyName, true);
+				}
+				else
+				{
+					Blackboard->SetValueAsBool(BlackboardKeybNeedsToRetreat.SelectedKeyName, false);
+				}
 			}
 		}
 	}
 	else
 	{
-		Blackboard->SetValueAsObject(BlackboardKeyTargetActor.SelectedKeyName, nullptr);
+		Blackboard->SetValueAsObject(BlackboardKeyTargetToFollow.SelectedKeyName, nullptr);
 
 		if (!BlackboardKeyHasValidTarget.SelectedKeyName.IsNone())
 		{
@@ -150,10 +161,12 @@ void UBTService_FindNearestPlayer::InitializeFromAsset(UBehaviorTree& Asset)
 	UBlackboardData* BBAsset = Asset.GetBlackboardAsset();
 	if (ensure(BBAsset))
 	{
-		BlackboardKeyTargetActor.ResolveSelectedKey(*BBAsset);
+		BlackboardKeyTargetToFollow.ResolveSelectedKey(*BBAsset);
 		BlackboardKeyHasValidTarget.ResolveSelectedKey(*BBAsset);
 		BlackboardKeyPatrolLocation.ResolveSelectedKey(*BBAsset);
 		BlackboardKeyLocationFarFromTarget.ResolveSelectedKey(*BBAsset);
 		BlackboardKeyIsMelee.ResolveSelectedKey(*BBAsset);
+		BlackboardKeybNeedsToRetreat.ResolveSelectedKey(*BBAsset);
+		BlackboardKeyLastLocation.ResolveSelectedKey(*BBAsset);
 	}
 }

@@ -22,7 +22,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Blackboard", meta = (AllowedTypes = "Object"))
-	FBlackboardKeySelector BlackboardKeyTargetActor;
+	FBlackboardKeySelector BlackboardKeyTargetToFollow;
 
 	/** 是否找到有效目标（可选，方便 BT Decorator 使用） */
 	UPROPERTY(EditAnywhere, Category = "Blackboard", meta = (AllowedTypes = "Bool"))
@@ -36,6 +36,14 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Blackboard", meta = (AllowedTypes = "Bool"))
 	FBlackboardKeySelector BlackboardKeyIsMelee;
+
+	UPROPERTY(EditAnywhere, Category = "Blackboard", meta = (AllowedTypes = "Bool"))
+	FBlackboardKeySelector BlackboardKeybNeedsToRetreat;
+
+	UPROPERTY(EditAnywhere, Category = "Blackboard", meta = (AllowedTypes = "Vector"))
+	FBlackboardKeySelector BlackboardKeyLastLocation;
+
+
 
 	/** 最远发现距离（厘米） */
 	UPROPERTY(EditAnywhere, Category = "AI")
@@ -52,4 +60,6 @@ protected:
 	/** 远程单位与玩家保持的理想距离（厘米） */
 	UPROPERTY(EditAnywhere, Category = "AI", meta = (ClampMin = "0"))
 	float AttackDistance = 500.f;
+
+	FVector LastLocation;
 };
