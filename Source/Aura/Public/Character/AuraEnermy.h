@@ -78,6 +78,9 @@ public:
 	UPROPERTY()
 	TObjectPtr<AAuraAIController> AuraAIController;
 
+	UPROPERTY(BlueprintReadOnly)
+	bool bHasSeenPlayer;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual	void InitAbilityActorInfo() override;

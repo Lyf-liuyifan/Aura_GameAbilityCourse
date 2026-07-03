@@ -1,0 +1,63 @@
+---
+description: UE C++ 中文注释规范——类/函数文档与函数内逻辑分块注释
+alwaysApply: true
+---
+
+# UE C++ 中文注释规范
+
+编写或修改 Aura 项目中的 C++ 代码（`.h` / `.cpp`）时，**必须**使用**简体中文**注释，并遵循 UE 惯例。
+
+## 注释层级
+
+| 层级 | 格式 | 用途 |
+|------|------|------|
+| 类 / 结构体 | `/** ... */` 置于 `UCLASS` / `USTRUCT` 上方 | 说明职责、在系统中的位置 |
+| 函数 | `/** ... */` 置于声明上方（`.h`） | 说明功能、关键参数、返回值、副作用 |
+| 成员变量 | `/** ... */` 或 `//` 置于 `UPROPERTY` 上方 | 说明用途与取值含义 |
+| 函数内逻辑 | `//` 单行注释 | **每个逻辑小块**前加一行，说明「这一步在做什么、为什么」 |
+
+## 函数内分块注释（强制）
+
+函数体按逻辑拆成小块，**每一块之前**都要有中文注释。典型分块包括：
+
+- 空指针 / 有效性检查（`ensure`、`IsValid`）
+- 从黑板、组件、ASC 等获取数据
+- 循环、条件分支的意图
+- 数学计算或业务规则（暴击、距离、减伤等）
+- 写回黑板、触发委托、应用 GE 等副作用
+
+参考项目内 `DamageExecutionCalculation.cpp` 的写法：用 `// 1.` `// 2.` 标注主流程步骤，子步骤用 `//` 补充说明。
+
+```cpp
+// ❌ 缺少分块注释
+void UMyService::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+{
+    APawn* Pawn = OwnerComp.GetAIOwner()->GetPawn();
+    if (!Pawn) return;
+    TArray<AActor*> Players;
+    UGameplayStatics::GetAllActorsOfClass(Pawn, APlayerCharacter::StaticClass(), Players);
+    for (AActor* Actor : Players) { /* ... */ }
+}
+
+// ✅ 每块逻辑前有中文注释
+void UMyService::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+{
+    // 获取 AI 控制的 Pawn，无效则本帧不更新
+    APawn* Pawn = OwnerComp.GetAIOwner()->GetPawn();
+    if (!Pawn) return;
+
+    // 收集场景中所有玩家角色，用于距离比较
+    TArray<AActor*> Players;
+    UGameplayStatics::GetAllActorsOfClass(Pawn, APlayerCharacter::StaticClass(), Players);
+
+    // 遍历玩家，保留距离最近且在感知范围内的目标
+    for (AActor* Actor : Players) { /* ... */ }
+}
+```
+
+## 其他要求
+
+- 注释解释**意图与原因**，不要复述代码字面意思（避免 `// 获取 Pawn` 对应 `GetPawn()` 这种无信息注释）。
+- 新增或改动的函数：**不得**提交无注释的大段实现；仅改一两行时，至少保证所在逻辑块仍有注释。
+- 保持 UE 文件头 `// Fill out your copyright notice...` 不变；`GENERATED_BODY()` 等宏上方不写多余注释。
+- 用户明确要求「少注释 / 只改一行」时，可在该次修改中放宽，但默认仍遵守本规范。
