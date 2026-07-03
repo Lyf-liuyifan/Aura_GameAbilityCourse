@@ -31,6 +31,7 @@ void UBTService_FindNearestPlayer::InitializeFromAsset(UBehaviorTree& Asset)
 		BlackboardKeyLocationFarFromTarget.ResolveSelectedKey(*BBAsset);
 		BlackboardKeyIsMelee.ResolveSelectedKey(*BBAsset);
 		BlackboardKeybNeedsToRetreat.ResolveSelectedKey(*BBAsset);
+		BlackboardKeybNeedsToAdvance.ResolveSelectedKey(*BBAsset);
 		BlackboardKeyLastLocation.ResolveSelectedKey(*BBAsset);
 		BlackboardKeyDistanceToTarget.ResolveSelectedKey(*BBAsset);
 	}
@@ -140,7 +141,7 @@ AAuraCharacter* UBTService_FindNearestPlayer::FindPlayerOnNavMesh(
 	return NearestPlayer;
 }
 
-void UBTService_FindNearestPlayer::UpdateRangedRetreatData(
+void UBTService_FindNearestPlayer::UpdateRangedDistanceData(
 	UBlackboardComponent* Blackboard,
 	const FVector& MyLocation,
 	const FVector& PlayerLocation,
@@ -150,13 +151,29 @@ void UBTService_FindNearestPlayer::UpdateRangedRetreatData(
 
 	const float Distance = FVector::Dist(MyLocation, PlayerLocation);
 	const bool bTooClose = Distance < RetreatDistance;
+	const bool bTooFar = Distance > RangedAttackMax;
 
 	if (!BlackboardKeybNeedsToRetreat.SelectedKeyName.IsNone())
 	{
 		Blackboard->SetValueAsBool(BlackboardKeybNeedsToRetreat.SelectedKeyName, bTooClose);
 	}
+	if (!BlackboardKeybNeedsToAdvance.SelectedKeyName.IsNone())
+	{
+		Blackboard->SetValueAsBool(BlackboardKeybNeedsToAdvance.SelectedKeyName, bTooFar && !bTooClose);
+	}
 
 	if (bTooClose && !BlackboardKeyLocationFarFromTarget.SelectedKeyName.IsNone())
+	{
+		const FVector AwayFromPlayer = (MyLocation - PlayerLocation).GetSafeNormal();
+		const FVector RetreatLocation = PlayerLocation + AwayFromPlayer * RangedAttackDistance;
+
+		FNavLocation NavLocation;
+		if (NavSys->ProjectPointToNavigation(RetreatLocation, NavLocation, NavProjectionExtent))
+		{
+			Blackboard->SetValueAsVector(BlackboardKeyLocationFarFromTarget.SelectedKeyName, NavLocation.Location);
+		}
+	}
+	else if (bTooFar && !BlackboardKeyLocationFarFromTarget.SelectedKeyName.IsNone())
 	{
 		const FVector AwayFromPlayer = (MyLocation - PlayerLocation).GetSafeNormal();
 		const FVector RetreatLocation = PlayerLocation + AwayFromPlayer * RangedAttackDistance;
@@ -194,6 +211,10 @@ void UBTService_FindNearestPlayer::ClearCombatBlackboard(UBlackboardComponent* B
 	if (!BlackboardKeybNeedsToRetreat.SelectedKeyName.IsNone())
 	{
 		Blackboard->SetValueAsBool(BlackboardKeybNeedsToRetreat.SelectedKeyName, false);
+	}
+	if (!BlackboardKeybNeedsToAdvance.SelectedKeyName.IsNone())
+	{
+		Blackboard->SetValueAsBool(BlackboardKeybNeedsToAdvance.SelectedKeyName, false);
 	}
 	if (!BlackboardKeyDistanceToTarget.SelectedKeyName.IsNone())
 	{
@@ -234,6 +255,7 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
+	// --- 基础引用 ---
 	AAIController* AIController = OwnerComp.GetAIOwner();
 	if (!AIController) return;
 
@@ -243,6 +265,7 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	UBlackboardComponent* Blackboard = OwnerComp.GetBlackboardComponent();
 	if (!Blackboard) return;
 
+	// 每个敌人独立的战斗态记忆（避免 BT Service 类成员被所有敌人共享）
 	FBTFindNearestPlayerMemory* Memory = reinterpret_cast<FBTFindNearestPlayerMemory*>(NodeMemory);
 
 	UWorld* World = MyPawn->GetWorld();
@@ -253,11 +276,13 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	const FVector MyLocation = MyPawn->GetActorLocation();
 	const bool bIsMelee = MyPawn->ActorHasTag(FName("Melee"));
 
+	// 写入 IsMelee，供 BT Decorator 分流近战 / 远程
 	if (!BlackboardKeyIsMelee.SelectedKeyName.IsNone())
 	{
 		Blackboard->SetValueAsBool(BlackboardKeyIsMelee.SelectedKeyName, bIsMelee);
 	}
 
+	// bHasSeenPlayer：false=巡逻态，true=战斗态（首次发现玩家后永久切换，直到玩家离开 NavMesh）
 	const bool bHasSeenPlayer = Memory ? Memory->bHasSeenPlayer : false;
 
 	float DistanceToTarget = MAX_FLT;
@@ -265,10 +290,12 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 
 	if (!bHasSeenPlayer)
 	{
+		// 【巡逻态】情况1：用视野锥 + 距离 + 可选 LOS 做首次发现
 		TargetPlayer = FindPlayerInSight(MyPawn, MyLocation, DistanceToTarget);
 
 		if (TargetPlayer)
 		{
+			// 【情况2】首次发现玩家 → 进入战斗态，BT 走战斗 Sequence
 			const FVector PlayerLocation = TargetPlayer->GetActorLocation();
 
 			SetHasSeenPlayer(Blackboard, Memory, true);
@@ -289,15 +316,20 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 				Blackboard->SetValueAsFloat(BlackboardKeyDistanceToTarget.SelectedKeyName, DistanceToTarget);
 			}
 
+			// 远程：计算三区距离标志（太近后撤 / 太远追击 / 理想区 EQS）
 			if (!bIsMelee && NavSys)
 			{
-				UpdateRangedRetreatData(Blackboard, MyLocation, PlayerLocation, NavSys);
+				UpdateRangedDistanceData(Blackboard, MyLocation, PlayerLocation, NavSys);
 			}
 			else
 			{
 				if (!BlackboardKeybNeedsToRetreat.SelectedKeyName.IsNone())
 				{
 					Blackboard->SetValueAsBool(BlackboardKeybNeedsToRetreat.SelectedKeyName, false);
+				}
+				if (!BlackboardKeybNeedsToAdvance.SelectedKeyName.IsNone())
+				{
+					Blackboard->SetValueAsBool(BlackboardKeybNeedsToAdvance.SelectedKeyName, false);
 				}
 				if (!BlackboardKeyLocationFarFromTarget.SelectedKeyName.IsNone())
 				{
@@ -307,6 +339,7 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 		}
 		else
 		{
+			// 【情况1】未发现玩家 → HasValidTarget=false，BT 走巡逻 Sequence
 			ClearCombatBlackboard(Blackboard, Memory);
 			if (NavSys)
 			{
@@ -316,11 +349,13 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	}
 	else
 	{
+		// 【战斗态】情况3：全图追踪 NavMesh 上的玩家，不再受视野锥限制
 		bool bPlayerOnNavMesh = false;
 		TargetPlayer = FindPlayerOnNavMesh(World, MyLocation, DistanceToTarget, bPlayerOnNavMesh);
 
 		if (TargetPlayer && bPlayerOnNavMesh)
 		{
+			// 玩家仍在 NavMesh 上 → 持续追击，BT 保持战斗 Sequence
 			const FVector PlayerLocation = TargetPlayer->GetActorLocation();
 
 			if (!BlackboardKeyTargetToFollow.SelectedKeyName.IsNone())
@@ -340,15 +375,21 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 				Blackboard->SetValueAsFloat(BlackboardKeyDistanceToTarget.SelectedKeyName, DistanceToTarget);
 			}
 
+			// 情况4（<RetreatDistance 后撤）/ 情况5（>RangedAttackMax 追击）/ 情况2（理想区 EQS）
 			if (!bIsMelee && NavSys)
 			{
-				UpdateRangedRetreatData(Blackboard, MyLocation, PlayerLocation, NavSys);
+				UpdateRangedDistanceData(Blackboard, MyLocation, PlayerLocation, NavSys);
 			}
 			else
 			{
 				if (!BlackboardKeybNeedsToRetreat.SelectedKeyName.IsNone())
 				{
 					Blackboard->SetValueAsBool(BlackboardKeybNeedsToRetreat.SelectedKeyName, false);
+				}
+				if (!BlackboardKeybNeedsToAdvance.SelectedKeyName.IsNone())
+				{
+					Blackboard->SetValueAsBool(BlackboardKeybNeedsToAdvance.SelectedKeyName, false);
+
 				}
 				if (!BlackboardKeyLocationFarFromTarget.SelectedKeyName.IsNone())
 				{
@@ -358,6 +399,7 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 		}
 		else
 		{
+			// 【情况3 边界】玩家离开 NavMesh → 退出战斗态，回巡逻
 			ClearCombatBlackboard(Blackboard, Memory);
 			if (NavSys)
 			{
@@ -367,6 +409,7 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	}
 
 #if ENABLE_DRAW_DEBUG
+	// 巡逻态画视野锥，战斗态只画搜索球
 	const FVector Forward = MyPawn->GetActorForwardVector();
 	const bool bInCombat = Memory && Memory->bHasSeenPlayer;
 

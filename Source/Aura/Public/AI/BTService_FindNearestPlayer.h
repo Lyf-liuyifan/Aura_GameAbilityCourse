@@ -52,6 +52,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Blackboard", meta = (AllowedTypes = "Bool"))
 	FBlackboardKeySelector BlackboardKeybNeedsToRetreat;
 
+	UPROPERTY(EditAnywhere, Category = "Blackboard", meta = (AllowedTypes = "Bool"))
+	FBlackboardKeySelector BlackboardKeybNeedsToAdvance;
+
 	UPROPERTY(EditAnywhere, Category = "Blackboard", meta = (AllowedTypes = "Vector"))
 	FBlackboardKeySelector BlackboardKeyLastLocation;
 
@@ -82,6 +85,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "AI", meta = (ClampMin = "0"))
 	float RetreatDistance = 400.f;
 
+	/** 玩家距敌人大于此值时远程单位追击（厘米） */
+	UPROPERTY(EditAnywhere, Category = "AI", meta = (ClampMin = "0"))
+	float RangedAttackMax = 650.f;
+
 	/** NavMesh 投影搜索范围 */
 	UPROPERTY(EditAnywhere, Category = "AI", meta = (ClampMin = "0"))
 	FVector NavProjectionExtent = FVector(500.f, 500.f, 500.f);
@@ -89,7 +96,7 @@ protected:
 	AAuraCharacter* FindPlayerInSight(APawn* MyPawn, const FVector& MyLocation, float& OutDistance) const;
 	AAuraCharacter* FindPlayerOnNavMesh(UWorld* World, const FVector& MyLocation, float& OutDistance, bool& bOutOnNavMesh) const;
 
-	void UpdateRangedRetreatData(
+	void UpdateRangedDistanceData(
 		UBlackboardComponent* Blackboard,
 		const FVector& MyLocation,
 		const FVector& PlayerLocation,
