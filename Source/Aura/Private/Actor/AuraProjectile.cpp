@@ -9,6 +9,7 @@
 #include "../Aura.h"
 #include "Character/AuraCharacterBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "AuraDebugLogger.h"
 
 // Sets default values
 AAuraProjectile::AAuraProjectile()
@@ -68,6 +69,12 @@ void AAuraProjectile::BeginPlay()
 void AAuraProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OhterComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	UE_LOG(LogTemp, Log, TEXT("Projectile Overlap Other Actor"));
+	// #region agent log
+	AuraDebugLog(TEXT("B"), TEXT("run1"), TEXT("AuraProjectile.cpp:OnSphereOverlap"), TEXT("Projectile overlap begin"),
+		FString::Printf(TEXT("{\"OtherActor\":\"%s\",\"bHasAuthority\":%s}"),
+			OtherActor ? *OtherActor->GetName() : TEXT("null"),
+			HasAuthority() ? TEXT("true") : TEXT("false")));
+	// #endregion
 	if (ImpactSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
@@ -81,6 +88,10 @@ void AAuraProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
 		FlySoundComponent->Stop();
 
 		AAuraCharacterBase* TargetCharacter = Cast<AAuraCharacterBase>(OtherActor);
+		// #region agent log
+		AuraDebugLog(TEXT("B"), TEXT("run1"), TEXT("AuraProjectile.cpp:OnSphereOverlap"), TEXT("Cast to character result"),
+			FString::Printf(TEXT("{\"TargetCharacter\":\"%s\"}"), TargetCharacter ? *TargetCharacter->GetName() : TEXT("null")));
+		// #endregion
 		if (TargetCharacter)
 		{
 			if (UAbilitySystemComponent* TargetASC = TargetCharacter->GetAbilitySystemComponent())
@@ -88,6 +99,10 @@ void AAuraProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
 				if (DamageHandle.IsValid() && DamageHandle.Data.IsValid())
 				{
 					TargetASC->ApplyGameplayEffectSpecToTarget(*DamageHandle.Data.Get(), TargetASC);
+					// #region agent log
+					AuraDebugLog(TEXT("B"), TEXT("run1"), TEXT("AuraProjectile.cpp:OnSphereOverlap"), TEXT("Applied damage effect"),
+						FString::Printf(TEXT("{\"TargetASC\":\"%s\"}"), *TargetASC->GetName()));
+					// #endregion
 				}
 			}
 		}

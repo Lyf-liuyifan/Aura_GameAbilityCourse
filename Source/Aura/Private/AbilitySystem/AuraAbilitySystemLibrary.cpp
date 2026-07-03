@@ -45,10 +45,12 @@ UMenuWidgetController* UAuraAbilitySystemLibrary::GetAttributeMenuWidgetControll
 	return nullptr;
 }
 
-void UAuraAbilitySystemLibrary::AddCharacterAbilities(UObject* WorldContextObject, UAbilitySystemComponent* ASC)
+void UAuraAbilitySystemLibrary::AddCharacterAbilities(UObject* WorldContextObject, UAbilitySystemComponent* ASC, ECharacterClass CharacterClass)
 {
 	AAuraGameModeBase* AuraGameMode = Cast<AAuraGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
 	if (AuraGameMode == nullptr) return;
+
+	if (CharacterClass == ECharacterClass::None) return;
 
 	UCharacterClassInfo* CharacterClassInfo = AuraGameMode->CharacterClassInfo;
 	if (CharacterClassInfo == nullptr) return;
@@ -61,6 +63,15 @@ void UAuraAbilitySystemLibrary::AddCharacterAbilities(UObject* WorldContextObjec
 		{
 			// Assuming you have a function to add abilities to the character
 			// AddAbilityToCharacter(Ability);
+			FGameplayAbilitySpec AbilitySpec(Ability, 1);
+			ASC->GiveAbility(AbilitySpec);
+		}
+	}
+	auto CharacterClassDefaultInfo = CharacterClassInfo->GetDefaultInfoForClass(CharacterClass);
+	for (const TSubclassOf<UGameplayAbility>& Ability : CharacterClassDefaultInfo.StartupAbilities)
+	{
+		if (Ability)
+		{
 			FGameplayAbilitySpec AbilitySpec(Ability, 1);
 			ASC->GiveAbility(AbilitySpec);
 		}

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "UI/WidgetController/AuraOverlayWidgetController.h"
+#include "AbilitySystem/Data/CharacterClassInfo.h"
 #include "AuraAbilitySystemLibrary.generated.h"
 
 /**
@@ -24,7 +25,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibary|WidgetConroller")
 	static UMenuWidgetController* GetAttributeMenuWidgetController(const UObject* WorldContextObject);
 
-	static void AddCharacterAbilities(UObject* WorldContextObject, UAbilitySystemComponent* ASC);
+	static void AddCharacterAbilities(UObject* WorldContextObject, UAbilitySystemComponent* ASC, ECharacterClass CharacterClass);
 
 	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibary|GameplayEffects")
 	static bool IsBlockedHit(const FGameplayEffectContextHandle& EffectContextHandle);

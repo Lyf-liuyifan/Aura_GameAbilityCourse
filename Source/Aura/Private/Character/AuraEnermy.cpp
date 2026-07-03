@@ -126,7 +126,7 @@ void AAuraEnermy::BeginPlay()
 	InitAbilityActorInfo();
 
 	GetAbilitySystemComponent()->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(FName("Effects.HitReact")), EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AAuraEnermy::GetHitReact);
-	UAuraAbilitySystemLibrary::AddCharacterAbilities(this, GetAbilitySystemComponent());
+	UAuraAbilitySystemLibrary::AddCharacterAbilities(this, GetAbilitySystemComponent(), CharacterType);
 }
 
 

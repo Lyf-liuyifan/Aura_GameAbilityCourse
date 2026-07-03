@@ -64,6 +64,8 @@ public:
 	/* Actor Tags */
 	FGameplayTag Actor_FireBolt;
 
+	FGameplayTag Abilities_Attack;
+
 protected:
 
 private:

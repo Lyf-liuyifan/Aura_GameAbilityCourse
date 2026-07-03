@@ -12,6 +12,7 @@
 #include "UI/Widget/DamageTextWidgetComponent.h"
 #include "GameFramework/Character.h"
 #include "Character/AuraEnermy.h"
+#include "AuraDebugLogger.h"
 
 
 class UInputMappingContext;
@@ -139,7 +140,12 @@ void AAuraPlayerController::AbilityInputPressed(FGameplayTag InputTag)
 
 void AAuraPlayerController::AbilityInputReleased(FGameplayTag InputTag)
 {
-	
+	// #region agent log
+	AuraDebugLog(TEXT("A"), TEXT("run1"), TEXT("AuraPlayerController.cpp:AbilityInputReleased"), TEXT("Input released"),
+		FString::Printf(TEXT("{\"InputTag\":\"%s\",\"bIsTargeting\":%s,\"FocusedActor\":\"%s\"}"),
+		*InputTag.ToString(), bIsTargeting ? TEXT("true") : TEXT("false"),
+		FocusedActor ? *GetNameSafe(Cast<AActor>(FocusedActor)) : TEXT("null")));
+	// #endregion
 
 	if (!InputTag.MatchesTagExact(FAuraGameplayTags::GetSingletonInstance().InputTag_LMB))
 	{
@@ -165,6 +171,11 @@ void AAuraPlayerController::AbilityInputReleased(FGameplayTag InputTag)
 		if (FollowTime <= ShortThreshold && ControlledPawn)
 		{
 			if (UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, ControlledPawn->GetActorLocation(), CachedDestination)) {
+				// #region agent log
+				AuraDebugLog(TEXT("A"), TEXT("run1"), TEXT("AuraPlayerController.cpp:AbilityInputReleased"), TEXT("NavPath obtained"),
+					FString::Printf(TEXT("{\"PathPoints\":%d,\"CachedDestination\":\"%s\"}"),
+					NavPath->PathPoints.Num(), *CachedDestination.ToString()));
+				// #endregion
 				Spline->ClearSplinePoints();
 				for (const FVector& PointLoc : NavPath->PathPoints)
 				{

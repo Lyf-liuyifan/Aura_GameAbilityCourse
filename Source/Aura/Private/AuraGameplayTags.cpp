@@ -59,5 +59,6 @@ void FAuraGameplayTags::InitializeNativeGameplayTags()
 	/* Actor Tag Register*/
 	GameplayTags.Actor_FireBolt = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Actor.FireBolt"));
 
+	GameplayTags.Abilities_Attack = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Ability.Attack"));
 
 }
