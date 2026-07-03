@@ -84,8 +84,9 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 		}
 	}
 
-	if (NearestPlayer)
+	if (NearestPlayer || !IsValid(LastTarget))
 	{
+		LastTarget = Cast<AAuraCharacter>(NearestPlayer);
 		Blackboard->SetValueAsObject(BlackboardKeyTargetToFollow.SelectedKeyName, NearestPlayer);
 
 		if (!BlackboardKeyHasValidTarget.SelectedKeyName.IsNone())
@@ -131,6 +132,14 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 		if (!BlackboardKeyLocationFarFromTarget.SelectedKeyName.IsNone())
 		{
 			Blackboard->ClearValue(BlackboardKeyLocationFarFromTarget.SelectedKeyName);
+		}
+		if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetNavigationSystem(GetWorld()))
+		{
+			FNavLocation NavLocation;
+			if (NavSys->GetRandomReachablePointInRadius(MyLocation, SearchRadius, NavLocation))
+			{
+				Blackboard->SetValueAsVector(BlackboardKeyPatrolLocation.SelectedKeyName, NavLocation.Location);
+			}
 		}
 	}
 

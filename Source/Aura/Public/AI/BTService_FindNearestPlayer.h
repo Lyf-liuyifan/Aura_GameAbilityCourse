@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
 #include "BehaviorTree/BTService.h"
 #include "BTService_FindNearestPlayer.generated.h"
 
@@ -62,4 +63,7 @@ protected:
 	float AttackDistance = 500.f;
 
 	FVector LastLocation;
+
+	UPROPERTY()
+	TObjectPtr<AAuraCharacter> LastTarget;
 };
