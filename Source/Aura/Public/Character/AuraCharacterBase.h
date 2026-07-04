@@ -39,10 +39,22 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void ShowCharacterAttribute();
 
-	virtual void Die() override;
 	
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastOnDeath();
+
+
+	/* Combat Interface */
+	virtual FVector GetCombatSocketLocation_Implementation()override;
+	virtual bool IsDead_Implementation() const override;
+	virtual AActor* GetAvatar_Implementation()override;
+	virtual void Die() override;
+
+
+	bool bDead = false;
+
+	/* End Combat Interface */
+
 
 
 	//本身有技能组件挂载在角色上，所以UI只需要从角色身上获得属性变化即可，本身作为一个UI Controller,再广播给UI组件
@@ -120,8 +132,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	FName WeaponTipSocketName;
-
-	virtual FVector GetCombatSocketLocation()override;
 
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;

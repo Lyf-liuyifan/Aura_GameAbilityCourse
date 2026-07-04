@@ -46,6 +46,22 @@ void AAuraCharacterBase::Die()
 	MulticastOnDeath();
 }
 
+FVector AAuraCharacterBase::GetCombatSocketLocation_Implementation()
+{
+	check(Weapon);
+	return Weapon->GetSocketLocation(WeaponTipSocketName);
+}
+
+bool AAuraCharacterBase::IsDead_Implementation() const
+{
+	return bDead;
+}
+
+AActor* AAuraCharacterBase::GetAvatar_Implementation()
+{
+	return this;
+}
+
 void AAuraCharacterBase::MulticastOnDeath_Implementation()
 {
 	Weapon->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
@@ -60,6 +76,7 @@ void AAuraCharacterBase::MulticastOnDeath_Implementation()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Dissolve();
 	HealthBar->SetVisibility(false);
+	bDead = true;
 }
 
 void AAuraCharacterBase::BindAttributeChangeDelegate()
@@ -106,11 +123,6 @@ void AAuraCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
-}
-
-FVector AAuraCharacterBase::GetCombatSocketLocation()
-{
-	return Weapon->GetSocketLocation(WeaponTipSocketName);
 }
 
 void AAuraCharacterBase::InitAbilityActorInfo()

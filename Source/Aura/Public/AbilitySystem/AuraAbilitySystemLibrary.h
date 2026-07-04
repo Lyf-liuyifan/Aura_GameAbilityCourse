@@ -39,4 +39,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibary|GameplayEffects")
 	static void SetIsCraticalHit(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsCriticalHit);
+
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibary|GameplayAbility")
+	static void GetLivePlayersWitinRadius(const UObject* WorldContextObject, const FVector& Origin, float Radius, TArray<AActor*>& OutActors,const TArray<AActor*>& ToIgnoreActors);
 };

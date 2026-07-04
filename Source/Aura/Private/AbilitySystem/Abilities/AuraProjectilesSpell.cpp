@@ -24,7 +24,7 @@ void UAuraProjectilesSpell::CastFireBolt(const FVector& ProjectileTargetLocation
 	ICombatInterface* GetSpawnLocation = Cast<ICombatInterface>(GetAvatarActorFromActorInfo());
 	if (GetSpawnLocation)
 	{
-		const FVector SocketLocation = GetSpawnLocation->GetCombatSocketLocation();
+		const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(GetAvatarActorFromActorInfo());
 		FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
 		Rotation.Pitch = 0.f;
 		SpawnTransform.SetLocation(SocketLocation);

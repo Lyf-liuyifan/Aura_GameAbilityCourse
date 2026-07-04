@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Game/AuraGameModeBase.h"
 #include "AbilitySystem/AuraAbilityTypes.h"
+#include "Character/AuraCharacterBase.h"
 #include "UI/WidgetController/AuraOverlayWidgetController.h"
 
 UAuraOverlayWidgetController* UAuraAbilitySystemLibrary::GetOverlayWidgetController(const UObject* WorldContextObject)
@@ -94,6 +95,24 @@ bool UAuraAbilitySystemLibrary::IsCriticalHit(const FGameplayEffectContextHandle
 		return AuraEffectContext->IsCriticalHit();
 	}
 	return false;
+}
+
+void UAuraAbilitySystemLibrary::GetLivePlayersWitinRadius(const UObject* WorldContextObject, const FVector& Origin, float Radius, TArray<AActor*>& OutActors,const TArray<AActor*>& ToIgnoreActors)
+{
+	FCollisionQueryParams SphereParams;
+	SphereParams.AddIgnoredActors(ToIgnoreActors);
+	TArray<FOverlapResult> OverlapResults;
+	if(const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	{
+		World->OverlapMultiByObjectType(OverlapResults, Origin, FQuat::Identity, FCollisionObjectQueryParams(ECollisionChannel::ECC_Pawn), FCollisionShape::MakeSphere(Radius), SphereParams);
+		for (const FOverlapResult& Result : OverlapResults)
+		{
+			if (Result.GetActor()->Implements<UCombatInterface>() && !ICombatInterface::Execute_IsDead(Result.GetActor()))
+			{
+				OutActors.AddUnique(ICombatInterface::Execute_GetAvatar(Result.GetActor()));
+			}
+		}
+	}
 }
 
 void UAuraAbilitySystemLibrary::SetIsCraticalHit(FGameplayEffectContextHandle& EffectContextHandle, bool bInIsCriticalHit)
