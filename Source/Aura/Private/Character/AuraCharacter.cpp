@@ -84,3 +84,9 @@ int32 AAuraCharacter::GetPlayerLevel()
 	}
 	return 0;
 }
+
+void AAuraCharacter::Die()
+{
+	SetLifeSpan(DeathLifeSpan);
+	Super::Die();
+}

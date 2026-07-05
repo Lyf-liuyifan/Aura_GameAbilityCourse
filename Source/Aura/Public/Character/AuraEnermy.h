@@ -32,8 +32,7 @@ public:
 	virtual int32 GetPlayerLevel() override { return Level; }
 	virtual void Die() override;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float DeathLifeSpan = 5.f;
+	
 
 	/* End ICombatInterface */
 

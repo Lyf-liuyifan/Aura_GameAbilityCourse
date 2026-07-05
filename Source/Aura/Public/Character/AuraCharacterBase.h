@@ -66,6 +66,9 @@ public:
 
 	bool bDead = false;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float DeathLifeSpan = 5.f;
+
 	/* End Combat Interface */
 
 

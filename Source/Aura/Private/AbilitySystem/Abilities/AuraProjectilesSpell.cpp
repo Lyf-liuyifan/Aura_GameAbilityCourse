@@ -25,7 +25,7 @@ void UAuraProjectilesSpell::CastFireBolt(const FVector& ProjectileTargetLocation
 	if (CombatInterface)
 	{
 		// 直接通过 C++ 虚函数调用，接口声明里的默认参数在此生效
-		const FVector SocketLocation = CombatInterface->GetCombatSocketLocation();
+		const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(GetAvatarActorFromActorInfo(), FGameplayTag());
 		FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
 		Rotation.Pitch = 0.f;
 		SpawnTransform.SetLocation(SocketLocation);

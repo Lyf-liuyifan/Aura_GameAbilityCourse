@@ -64,10 +64,12 @@ AActor* AAuraCharacterBase::GetAvatar_Implementation()
 
 void AAuraCharacterBase::MulticastOnDeath_Implementation()
 {
-	Weapon->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
-	Weapon->SetSimulatePhysics(true);
-	Weapon->SetEnableGravity(true);
-	Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	if (IsValid(Weapon)) {
+		Weapon->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
+		Weapon->SetSimulatePhysics(true);
+		Weapon->SetEnableGravity(true);
+		Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	}
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->SetEnableGravity(true);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
