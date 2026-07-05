@@ -1,6 +1,106 @@
 root = true
 
+# 基础设置: 字符集与换行 (对所有支持的文件类型生效)
 [*.{h,hpp,c,cc,cpp,cs,ini,uproject,uplugin,md,txt,json}]
 charset = utf-8
 end_of_line = crlf
 insert_final_newline = true
+
+# Unreal Engine 命名约定规则
+# 来源: https://github.com/microsoft/vc-ue-extensions (Microsoft 官方模板)
+# 作用: 让 Visual Studio 的 lnt-naming-convention 检查器识别 UE 命名前缀规范
+#       (A=Actor, U=UObject, S=SWidget, F=struct, E=enum, T=template, b=bool)
+# 规则只对 .cpp/.h 生效,不影响其他文件类型
+# 必须放在项目根目录,VS 的命名约定检查器配置页面才会识别到定义
+
+[*.{cpp,h}]
+
+# 命名规则 (注意: 必须从更具体到更不具体的顺序排列)
+
+cpp_naming_rule.aactor_prefixed.symbols = aactor_class
+cpp_naming_rule.aactor_prefixed.style = aactor_style
+
+cpp_naming_rule.swidget_prefixed.symbols = swidget_class
+cpp_naming_rule.swidget_prefixed.style = swidget_style
+
+cpp_naming_rule.uobject_prefixed.symbols = uobject_class
+cpp_naming_rule.uobject_prefixed.style = uobject_style
+
+cpp_naming_rule.booleans_prefixed.symbols = boolean_vars
+cpp_naming_rule.booleans_prefixed.style = boolean_style
+
+cpp_naming_rule.structs_prefixed.symbols = structs
+cpp_naming_rule.structs_prefixed.style = unreal_engine_structs
+
+cpp_naming_rule.enums_prefixed.symbols = enums
+cpp_naming_rule.enums_prefixed.style = unreal_engine_enums
+
+cpp_naming_rule.templates_prefixed.symbols = templates
+cpp_naming_rule.templates_prefixed.style = unreal_engine_templates
+
+cpp_naming_rule.general_names.symbols = all_symbols
+cpp_naming_rule.general_names.style = unreal_engine_default
+
+# 符号分类 (告诉检查器每种规则适用于哪种符号)
+
+cpp_naming_symbols.aactor_class.applicable_kinds = class
+cpp_naming_symbols.aactor_class.applicable_type = AActor
+
+cpp_naming_symbols.swidget_class.applicable_kinds = class
+cpp_naming_symbols.swidget_class.applicable_type = SWidget
+
+cpp_naming_symbols.uobject_class.applicable_kinds = class
+cpp_naming_symbols.uobject_class.applicable_type = UObject
+
+cpp_naming_symbols.boolean_vars.applicable_kinds = local,parameter,field
+cpp_naming_symbols.boolean_vars.applicable_type = bool
+
+cpp_naming_symbols.enums.applicable_kinds = enum
+
+cpp_naming_symbols.templates.applicable_kinds = template_class
+
+cpp_naming_symbols.structs.applicable_kinds = struct
+
+cpp_naming_symbols.all_symbols.applicable_kinds = *
+
+# 命名样式 (定义具体的前缀和大小写规则)
+
+cpp_naming_style.unreal_engine_default.capitalization = pascal_case
+cpp_naming_style.unreal_engine_default.required_prefix =
+cpp_naming_style.unreal_engine_default.required_suffix =
+cpp_naming_style.unreal_engine_default.word_separator =
+
+cpp_naming_style.unreal_engine_enums.capitalization = pascal_case
+cpp_naming_style.unreal_engine_enums.required_prefix = E
+cpp_naming_style.unreal_engine_enums.required_suffix =
+cpp_naming_style.unreal_engine_enums.word_separator =
+
+cpp_naming_style.unreal_engine_templates.capitalization = pascal_case
+cpp_naming_style.unreal_engine_templates.required_prefix = T
+cpp_naming_style.unreal_engine_templates.required_suffix =
+cpp_naming_style.unreal_engine_templates.word_separator =
+
+cpp_naming_style.unreal_engine_structs.capitalization = pascal_case
+cpp_naming_style.unreal_engine_structs.required_prefix = F
+cpp_naming_style.unreal_engine_structs.required_suffix =
+cpp_naming_style.unreal_engine_structs.word_separator =
+
+cpp_naming_style.uobject_style.capitalization = pascal_case
+cpp_naming_style.uobject_style.required_prefix = U
+cpp_naming_style.uobject_style.required_suffix =
+cpp_naming_style.uobject_style.word_separator =
+
+cpp_naming_style.aactor_style.capitalization = pascal_case
+cpp_naming_style.aactor_style.required_prefix = A
+cpp_naming_style.aactor_style.required_suffix =
+cpp_naming_style.aactor_style.word_separator =
+
+cpp_naming_style.swidget_style.capitalization = pascal_case
+cpp_naming_style.swidget_style.required_prefix = S
+cpp_naming_style.swidget_style.required_suffix =
+cpp_naming_style.swidget_style.word_separator =
+
+cpp_naming_style.boolean_style.capitalization = pascal_case
+cpp_naming_style.boolean_style.required_prefix = b
+cpp_naming_style.boolean_style.required_suffix =
+cpp_naming_style.boolean_style.word_separator =

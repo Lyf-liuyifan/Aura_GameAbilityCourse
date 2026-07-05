@@ -46,7 +46,7 @@ void AAuraCharacterBase::Die()
 	MulticastOnDeath();
 }
 
-FVector AAuraCharacterBase::GetCombatSocketLocation_Implementation()
+FVector AAuraCharacterBase::GetCombatSocketLocation_Implementation(const FGameplayTag& SocketTag)
 {
 	check(Weapon);
 	return Weapon->GetSocketLocation(WeaponTipSocketName);
@@ -75,7 +75,12 @@ void AAuraCharacterBase::MulticastOnDeath_Implementation()
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Dissolve();
-	HealthBar->SetVisibility(false);
+
+	// 玩家角色没有 HealthBar 组件，仅对有效对象隐藏血条
+	if (IsValid(HealthBar))
+	{
+		HealthBar->SetVisibility(false);
+	}
 	bDead = true;
 }
 

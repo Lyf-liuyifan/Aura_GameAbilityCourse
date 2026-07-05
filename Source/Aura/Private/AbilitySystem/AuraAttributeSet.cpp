@@ -11,7 +11,6 @@
 #include "Character/AuraCharacterBase.h"
 #include "Logging/StructuredLog.h"
 #include "Net/UnrealNetwork.h"
-#include "AuraDebugLogger.h"
 
 UAuraAttributeSet::UAuraAttributeSet()
 {
@@ -211,13 +210,6 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	if(Data.EvaluatedData.Attribute == GetInComingDamageAttribute())
 	{
 		// Handle damage-specific logic here
-		// #region agent log
-		AuraDebugLog(TEXT("C"), TEXT("run1"), TEXT("AuraAttributeSet.cpp:PostGameplayEffectExecute"), TEXT("Processing incoming damage"),
-			FString::Printf(TEXT("{\"TargetAvatar\":\"%s\",\"SourceAvatar\":\"%s\",\"IncomingDamage\":%f}"),
-			Props.TargetAvatarActor ? *Props.TargetAvatarActor->GetName() : TEXT("null"),
-			Props.SourceAvatarActor ? *Props.SourceAvatarActor->GetName() : TEXT("null"),
-			GetInComingDamage()));
-		// #endregion
 		float LocalIncomingDamage = GetInComingDamage();
 		SetInComingDamage(0.f); // Reset incoming damage after processing
 		float CurrentHealth = GetHealth() - LocalIncomingDamage;

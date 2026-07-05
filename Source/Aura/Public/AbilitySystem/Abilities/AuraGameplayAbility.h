@@ -30,6 +30,7 @@ public:
 	FGameplayTag DamageTypeTag;
 
 protected:
+	UFUNCTION(BlueprintCallable)
 	FGameplayEffectSpecHandle MakeDamageEffectSpec(
 		UAbilitySystemComponent* SourceASC,
 		TSubclassOf<UGameplayEffect> DamageEffectClass,

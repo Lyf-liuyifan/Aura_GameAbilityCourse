@@ -17,7 +17,14 @@ class UGameplayEffect;
 class UWidgetComponent;
 class UCharacterClassInfo;
 
-
+UENUM(BlueprintType)
+enum class ECharacterCategory : uint8
+{
+	Aura,
+	GolbianSpear,
+	GolbianShoot,
+	Monster
+};
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedDelegate, float, NewValue);
 
@@ -28,6 +35,11 @@ class AURA_API AAuraCharacterBase : public ACharacter, public IAbilitySystemInte
 	GENERATED_BODY()
 
 public:
+
+	/* CharacterInfo */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterInfo")
+	ECharacterCategory CharacterCategory;
+
 	/*
 	* 对人物进行初始化设置，比如人物的骨骼，武器属性的初始化（在堆上创建，使属性中指针指向它），包括碰撞预设等
 	*/
@@ -45,7 +57,7 @@ public:
 
 
 	/* Combat Interface */
-	virtual FVector GetCombatSocketLocation_Implementation()override;
+	virtual FVector GetCombatSocketLocation_Implementation(const FGameplayTag& SocketTag) override;
 	virtual bool IsDead_Implementation() const override;
 	virtual AActor* GetAvatar_Implementation()override;
 	virtual void Die() override;
