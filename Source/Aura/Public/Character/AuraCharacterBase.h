@@ -16,6 +16,7 @@ class UAttributeSet;
 class UGameplayEffect;
 class UWidgetComponent;
 class UCharacterClassInfo;
+class UAuraTagToMontage;
 
 UENUM(BlueprintType)
 enum class ECharacterCategory : uint8
@@ -144,6 +145,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	FName WeaponTipSocketName;
+
+	/* 角色攻击蒙太奇的「Tag -> Montage」映射数据资产，在角色蓝图的 CDO 中指定 DA_TagToMontage。
+	*  运行时由技能/动画逻辑调用 UAuraTagToMontage::GetMontageByTagFromData 查询具体蒙太奇。
+	*  DataAsset 是共享资产，多个角色实例指向同一份 .uasset 不会重复加载数据。*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Montage")
+	TObjectPtr<UAuraTagToMontage> TagToMontageData;
 
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;

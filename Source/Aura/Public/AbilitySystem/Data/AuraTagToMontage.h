@@ -60,7 +60,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montage")
 	TArray<FCharacterTagMontageMap> CharacterTagMontages;
 	
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	UAnimMontage* GetMontageByTagFromData(AAuraCharacterBase* Character, FGameplayTag MontageTag);
 
 };
