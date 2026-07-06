@@ -8,7 +8,7 @@
 #include "Character/AuraCharacterBase.h"
 #include "AuraTagToMontage.generated.h"
 
-//×îĞ¡µÄ±êÇ©ºÍ¶¯»­ÃÉÌ«ÆæµÄÓ³Éä½á¹¹Ìå
+//æœ€å°çš„æ ‡ç­¾å’ŒåŠ¨ç”»è’™å¤ªå¥‡çš„æ˜ å°„ç»“æ„ä½“
 USTRUCT(BlueprintType)
 struct FCharacterTagMontage
 {
@@ -23,7 +23,7 @@ struct FCharacterTagMontage
 };
 
 
-//Ã¿ÖÖ½ÇÉ«¶ÔÓ¦µÄ±êÇ©ºÍ¶¯»­ÃÉÌ«ÆæµÄÓ³Éä½á¹¹Ìå
+//æ¯ç§è§’è‰²å¯¹åº”çš„æ ‡ç­¾å’ŒåŠ¨ç”»è’™å¤ªå¥‡çš„æ˜ å°„ç»“æ„ä½“
 USTRUCT(BlueprintType)
 struct FCharacterTagMontageContainer
 {
@@ -33,7 +33,7 @@ struct FCharacterTagMontageContainer
 };
 
 
-//½ÇÉ«ÖÖÀà±êÇ©ºÍ¶¯»­ÃÉÌ«ÆæµÄÓ³Éä½á¹¹Ìå
+//è§’è‰²ç§ç±»æ ‡ç­¾å’ŒåŠ¨ç”»è’™å¤ªå¥‡çš„æ˜ å°„ç»“æ„ä½“
 USTRUCT(BlueprintType)
 struct FCharacterTagMontageMap
 {
@@ -63,4 +63,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	UAnimMontage* GetMontageByTagFromData(AAuraCharacterBase* Character, FGameplayTag MontageTag);
 
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	TArray<FCharacterTagMontage> GetAttackMontageArray(AAuraCharacterBase* Character);
 };

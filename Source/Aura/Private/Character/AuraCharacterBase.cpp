@@ -6,6 +6,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "AbilitySystem/AuraAttributeSet.h"
+#include "AuraGameplayTags.h"
 
 AAuraCharacterBase::AAuraCharacterBase()
 {
@@ -48,6 +49,29 @@ void AAuraCharacterBase::Die()
 
 FVector AAuraCharacterBase::GetCombatSocketLocation_Implementation(const FGameplayTag& SocketTag)
 {
+	// 取到全局 GameplayTag 单例，便于下面按 tag 名匹配攻击类型
+	const FAuraGameplayTags& InputTags = FAuraGameplayTags::GetSingletonInstance();
+
+	// 武器攻击：从武器骨骼网格组件上的「武器尖端」槽取位置
+	if (SocketTag.MatchesTag(InputTags.Montage_Attack_Weapon))
+	{
+		check(Weapon);
+		return Weapon->GetSocketLocation(WeaponTipSocketName);
+	}
+
+	// 左手攻击：从角色主骨骼网格体上的 LeftHand 槽取位置
+	if (SocketTag.MatchesTag(InputTags.Montage_Attack_LeftHand))
+	{
+		return GetMesh()->GetSocketLocation(FName("LeftHand"));
+	}
+
+	// 右手攻击：从角色主骨骼网格体上的 RightHand 槽取位置
+	if (SocketTag.MatchesTag(InputTags.Montage_Attack_RightHand))
+	{
+		return GetMesh()->GetSocketLocation(FName("RightHand"));
+	}
+
+	// 没有匹配到任何攻击类型时，回退到武器尖端槽，避免返回零向量导致技能逻辑异常
 	check(Weapon);
 	return Weapon->GetSocketLocation(WeaponTipSocketName);
 }
