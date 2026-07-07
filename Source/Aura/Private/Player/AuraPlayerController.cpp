@@ -7,36 +7,53 @@
 #include "AuraGameplayTags.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
-#include "NavigationPath.h"
-#include "NavigationSystem.h"
 #include "UI/Widget/DamageTextWidgetComponent.h"
 #include "GameFramework/Character.h"
 #include "Character/AuraEnermy.h"
-#include "AuraDebugLogger.h"
+#include "Misc/FileHelper.h"
+#include "HAL/FileManager.h"
+#include "HAL/PlatformTime.h"
+#include "Misc/Paths.h"
 
 
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
 
+// 把一条 NDJSON 日志追加到项目根目录下的 debug-cf25b3.log，供 debug mode 运行时取证
+static void AuraDebugLogNDJSON(const FString& Location, const FString& Message, const FString& DataJson)
+{
+	const uint64 Cycles = static_cast<uint64>(FPlatformTime::Cycles64());
+	const FString Line = FString::Printf(
+		TEXT("{\"sessionId\":\"cf25b3\",\"id\":\"log_%llu\",\"timestamp\":%llu,\"location\":\"%s\",\"message\":\"%s\",\"data\":%s,\"runId\":\"run1\"}\n"),
+		Cycles,
+		Cycles,
+		*Location,
+		*Message,
+		*DataJson);
+	// 用 ProjectDir 构造绝对路径，避免 UE 运行时工作目录不在项目根导致文件写到别处
+	const FString DebugLogFilePath = FPaths::ProjectDir() / TEXT("debug-cf25b3.log");
+	FFileHelper::SaveStringToFile(
+		Line,
+		*DebugLogFilePath,
+		FFileHelper::EEncodingOptions::AutoDetect,
+		&IFileManager::Get(),
+		FILEWRITE_Append);
+}
+
 AAuraPlayerController::AAuraPlayerController()
 {
 	//当前对象被复制时，是否应该复制它的属性。对于玩家控制器来说，通常需要设置为true，以便在网络游戏中正确同步玩家状态和行为。
 	//主要作用就是允许玩家控制器在服务器和客户端之间进行通信和同步，使得玩家的输入、状态和行为能够在网络游戏中正确地反映出来。
 	bReplicates = true;
-
-	Spline = CreateDefaultSubobject<USplineComponent>("Spline");
-
 }
 
 void AAuraPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 
+	// 鼠标拾取与敌人高亮仍需每帧执行（火球瞄准、UI 反馈都依赖它）
 	CursorTrace();
-
-	AutoRun();
-	
 }
 
 
@@ -107,10 +124,29 @@ void AAuraPlayerController::SetupInputComponent()
 		UE_LOG(LogTemp, Error, TEXT("AuraPlayerController [%s]: InputConfig is not set. Assign in BP_AuraPlayerController Class Defaults."), *GetName());
 		return;
 	}
+	if (!LookAction)
+	{
+		UE_LOG(LogTemp, Error, TEXT("AuraPlayerController [%s]: LookAction is not set. Assign in BP_AuraPlayerController Class Defaults. 用于右键拖动旋转相机."), *GetName());
+	}
 
 	UAuraInputComponent* AuraInputComponent = CastChecked<UAuraInputComponent>(InputComponent);
+
+	// WASD 移动
 	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAuraPlayerController::Move);
-	AuraInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputPressed, &ThisClass::AbilityInputReleased, &ThisClass::AbilityInputHeld);
+
+	// 右键拖动旋转相机：IA_Look 在 IMC 里绑定到 Mouse XY 2D 轴（不要绑成按钮）；
+	// 是否真正驱动旋转由 bRightMouseDown 标志位在 Look() 里门控（标志位在 AbilityInputHeld/Released 里根据 InputTag.RMB 维护）
+	AuraInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AAuraPlayerController::Look);
+
+	// 能力输入：只绑定 Released 与 Held，Pressed 由 ASC 内部状态机处理（当前 ASC 没有 AbilityInputTagPressed）。
+	// 这里把 Pressed 参数显式 cast 成对应的成员函数指针类型，让模板正确推导 PressedFuncType；
+	// BindAbilityActions 内部有 if (PressedFunc) 判空，传入 nullptr 后不会真正绑定 Started 事件。
+	AuraInputComponent->BindAbilityActions(
+		InputConfig,
+		this,
+		static_cast<void(AAuraPlayerController::*)(FGameplayTag)>(nullptr),
+		&ThisClass::AbilityInputReleased,
+		&ThisClass::AbilityInputHeld);
 }
 
 UAuraAbilitySystemComponent* AAuraPlayerController::GetASC()
@@ -123,112 +159,52 @@ UAuraAbilitySystemComponent* AAuraPlayerController::GetASC()
 }
 
 
-
-
-
-//绑定到输入组件的函数
-void AAuraPlayerController::AbilityInputPressed(FGameplayTag InputTag)
-{
-	//GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Red, *InputTag.ToString());
-	if (InputTag.MatchesTagExact(FAuraGameplayTags::GetSingletonInstance().InputTag_LMB))
-	{
-		bIsTargeting = FocusedActor ? true : false;
-		bAutoRunning = false;
-	}
-	
-}
-
+//能力输入松开：统一转发到 ASC（LMB 已不再做寻路分支，火球走 GAS 自己的目标数据链路）
 void AAuraPlayerController::AbilityInputReleased(FGameplayTag InputTag)
 {
 	// #region agent log
-	AuraDebugLog(TEXT("A"), TEXT("run1"), TEXT("AuraPlayerController.cpp:AbilityInputReleased"), TEXT("Input released"),
-		FString::Printf(TEXT("{\"InputTag\":\"%s\",\"bIsTargeting\":%s,\"FocusedActor\":\"%s\"}"),
-		*InputTag.ToString(), bIsTargeting ? TEXT("true") : TEXT("false"),
-		FocusedActor ? *GetNameSafe(Cast<AActor>(FocusedActor)) : TEXT("null")));
+	UE_LOG(LogTemp, Warning, TEXT("[DBG] AbilityInputReleased InputTag=%s bRightMouseDown=%s"), *InputTag.ToString(), bRightMouseDown ? TEXT("true") : TEXT("false"));
+	AuraDebugLogNDJSON(
+		TEXT("AuraPlayerController.cpp:AbilityInputReleased"),
+		TEXT("Input released"),
+		FString::Printf(TEXT("{\"InputTag\":\"%s\",\"bRightMouseDown\":%s}"),
+			*InputTag.ToString(), bRightMouseDown ? TEXT("true") : TEXT("false")));
 	// #endregion
 
-	if (!InputTag.MatchesTagExact(FAuraGameplayTags::GetSingletonInstance().InputTag_LMB))
+	// 右键松开时清除门控标志，Look() 不再驱动相机旋转
+	if (InputTag.MatchesTagExact(FAuraGameplayTags::GetSingletonInstance().InputTag_RMB))
 	{
-		bIsTargeting = FocusedActor ? true : false;
-		bAutoRunning = false;
-		if (GetASC())
-		{
-			GetASC()->AbilityInputTagReleased(InputTag);
-		}
-		
-		return;
+		bRightMouseDown = false;
+		UE_LOG(LogTemp, Warning, TEXT("[DBG] RMB released -> bRightMouseDown=false"));
 	}
-	if (bIsTargeting)
-	{//当鼠标在物体身上时
-		if (GetASC())
-		{
-			GetASC()->AbilityInputTagReleased(InputTag);
-		}
-	}
-	else
+	if (GetASC())
 	{
-		APawn* ControlledPawn = GetPawn();
-		if (FollowTime <= ShortThreshold && ControlledPawn)
-		{
-			if (UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, ControlledPawn->GetActorLocation(), CachedDestination)) {
-				// #region agent log
-				AuraDebugLog(TEXT("A"), TEXT("run1"), TEXT("AuraPlayerController.cpp:AbilityInputReleased"), TEXT("NavPath obtained"),
-					FString::Printf(TEXT("{\"PathPoints\":%d,\"CachedDestination\":\"%s\"}"),
-					NavPath->PathPoints.Num(), *CachedDestination.ToString()));
-				// #endregion
-				Spline->ClearSplinePoints();
-				for (const FVector& PointLoc : NavPath->PathPoints)
-				{
-					Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World);
-				}
-				CachedDestination = NavPath->PathPoints[NavPath->PathPoints.Num() - 1];
-				bAutoRunning = true;
-			}
-		}
-		FollowTime = 0.f;
-		bIsTargeting = false;
+		GetASC()->AbilityInputTagReleased(InputTag);
 	}
 }
 
+//能力输入按住：统一转发到 ASC，激活 StarupInputTag 匹配的能力（LMB → GA_ProjectileSpell 火球）
 void AAuraPlayerController::AbilityInputHeld(FGameplayTag InputTag)
 {
+	// #region agent log
+	UE_LOG(LogTemp, Warning, TEXT("[DBG] AbilityInputHeld InputTag=%s bRightMouseDown=%s"), *InputTag.ToString(), bRightMouseDown ? TEXT("true") : TEXT("false"));
+	AuraDebugLogNDJSON(
+		TEXT("AuraPlayerController.cpp:AbilityInputHeld"),
+		TEXT("Input held"),
+		FString::Printf(TEXT("{\"InputTag\":\"%s\",\"bRightMouseDown\":%s}"),
+			*InputTag.ToString(), bRightMouseDown ? TEXT("true") : TEXT("false")));
+	// #endregion
 
-	if (!InputTag.MatchesTagExact(FAuraGameplayTags::GetSingletonInstance().InputTag_LMB))
-	{//当按下的不是鼠标左键时，直接激活能力
-		bIsTargeting = FocusedActor ? true : false;
-		bAutoRunning = false;
-		if (GetASC()) 
-		{
-			GetASC()->AbilityInputTagHeld(InputTag);
-		}
-		return;
+	// 右键按住期间置位门控标志，Look() 据此决定是否驱动相机旋转
+	if (InputTag.MatchesTagExact(FAuraGameplayTags::GetSingletonInstance().InputTag_RMB))
+	{
+		bRightMouseDown = true;
+		UE_LOG(LogTemp, Warning, TEXT("[DBG] RMB held -> bRightMouseDown=true"));
 	}
-	
-	//当按下的是鼠标左键时，如果鼠标在物体身上
-	if (bIsTargeting)
-	{//当鼠标在物体身上时
-		if (GetASC())
-		{
-			GetASC()->AbilityInputTagHeld(InputTag);
-		}
+	if (GetASC())
+	{
+		GetASC()->AbilityInputTagHeld(InputTag);
 	}
-	else
-	{//当鼠标不在物体身上时，持续更新目标位置，并让角色朝着目标位置移动
-		FollowTime += GetWorld()->GetDeltaSeconds();
-
-		
-		if (CursorHit.bBlockingHit)
-		{
-			CachedDestination = CursorHit.ImpactPoint;
-		}
-		if (APawn* ControlledPawn = GetPawn())
-		{
-			const FVector WorlddDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
-			ControlledPawn->AddMovementInput(WorlddDirection);
-		}
-		
-	}
-
 }
 
 void AAuraPlayerController::Move(const FInputActionValue& Value)
@@ -254,44 +230,50 @@ void AAuraPlayerController::Move(const FInputActionValue& Value)
 
 }
 
+//右键按住时由 Enhanced Input 触发，把鼠标横向位移转成 ControlRotation 的 Yaw。
+//AddYawInput 写入 APlayerController::RotationInput，引擎在 UpdateRotation 时累加到 ControlRotation.Yaw；
+//SpringArm 开启 bUsePawnControlRotation 后会自动跟随，WASD 的 Move() 读 Yaw 也会同步方向。
+//门控：只有 bRightMouseDown 为 true（右键按住）时才驱动旋转，避免鼠标自由移动时相机乱转。
+void AAuraPlayerController::Look(const FInputActionValue& Value)
+{
+	const FVector2D LookAxis = Value.Get<FVector2D>();
+
+	// #region agent log
+	UE_LOG(LogTemp, Warning, TEXT("[DBG] Look invoked x=%.5f y=%.5f bRightMouseDown=%s"), LookAxis.X, LookAxis.Y, bRightMouseDown ? TEXT("true") : TEXT("false"));
+	AuraDebugLogNDJSON(
+		TEXT("AuraPlayerController.cpp:Look"),
+		TEXT("Look invoked"),
+		FString::Printf(TEXT("{\"x\":%.5f,\"y\":%.5f,\"bRightMouseDown\":%s,\"hypothesisId\":\"A\"}"),
+			LookAxis.X, LookAxis.Y, bRightMouseDown ? TEXT("true") : TEXT("false")));
+	// #endregion
+
+	// 右键未按住时直接返回，鼠标移动只用于光标定位，不旋转相机
+	if (!bRightMouseDown)
+	{
+		return;
+	}
+	// 只用 X 轴做 Yaw（按方案只做左右旋转，Pitch 保持固定）
+	AddYawInput(LookAxis.X * LookSensitivity);
+}
+
 void AAuraPlayerController::CursorTrace()
 {
 	//获取鼠标下的结果，使用ECC_Visibility通道进行碰撞检测，
 	// 并将结果存储在CursorHit变量中。这样可以检测鼠标指针下是否有可见的对象，并获取相关信息，例如碰撞位置、碰撞对象等。
-	
+
 	GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
 	if (!CursorHit.bBlockingHit) return;
 
-	//如果鼠标下有一个可见的对象，并且该对象实现了IEnermyInterface接口，那么将FocusedActor设置为该对象。这样可以让玩家控制器知道当前鼠标指针下的对象是什么，以便在游戏中进行相应的交互或显示相关信息。	
+	//如果鼠标下有一个可见的对象，并且该对象实现了IEnermyInterface接口，那么将FocusedActor设置为该对象。这样可以让玩家控制器知道当前鼠标指针下的对象是什么，以便在游戏中进行相应的交互或显示相关信息。
 	LastActor = FocusedActor;
 	FocusedActor = Cast<IEnermyInterface>(CursorHit.GetActor());
 
-	
+
 	if (LastActor != FocusedActor)
 	{
 		if (LastActor) LastActor->UnHighlightEnermy();
 		if (FocusedActor) FocusedActor->HighlightEnermy();
 	}
-	
+
 
 }
-
-void AAuraPlayerController::AutoRun()
-{
-
-	if (!bAutoRunning) return;
-	if (APawn* ControlledPawn = GetPawn())
-	{
-		const FVector LocationOnSpline = Spline->FindLocationClosestToWorldLocation(ControlledPawn->GetActorLocation(), ESplineCoordinateSpace::World);
-		//在最近的那个点沿切线方向
-		const FVector Direction = Spline->FindDirectionClosestToWorldLocation(LocationOnSpline, ESplineCoordinateSpace::World);
-		ControlledPawn->AddMovementInput(Direction);
-		const float DistanceToDestination = (LocationOnSpline - CachedDestination).Length();
-		if (DistanceToDestination <= AutoRunAcceptanceRadius)
-		{
-			bAutoRunning = false;
-		}
-	}
-}
-
-
