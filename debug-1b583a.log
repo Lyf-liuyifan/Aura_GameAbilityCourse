@@ -1,0 +1,4 @@
+﻿{"data":{"loadedKeys":"4096 SHA256:HnZk/QebBTQi8+42XxQUIzPybVENnp1ALoVjAb2BW/U liu@saber (RSA)","agentStatus":"Running"},"hypothesisId":"A,E","message":"before-ssh-add","runId":"load-ssh","sessionId":"1b583a","timestamp":1783596870635,"location":"load-windows-ssh.ps1"}
+{"data":{"loadedKeys":"4096 SHA256:HnZk/QebBTQi8+42XxQUIzPybVENnp1ALoVjAb2BW/U liu@saber (RSA)"},"hypothesisId":"A,E,H","message":"after-ssh-add","runId":"load-ssh","sessionId":"1b583a","timestamp":1783596870672,"location":"load-windows-ssh.ps1"}
+{"data":{"exitCode":0,"output":"6056347b52283212269590483a9e63228c35fb86\tHEAD\r\n6056347b52283212269590483a9e63228c35fb86\trefs/heads/main"},"hypothesisId":"H","message":"git-ls-remote","runId":"load-ssh","sessionId":"1b583a","timestamp":1783596874920,"location":"load-windows-ssh.ps1"}
+{"data":{"ok":true},"hypothesisId":"ALL","message":"load-done","runId":"load-ssh","sessionId":"1b583a","timestamp":1783596874921,"location":"load-windows-ssh.ps1"}
