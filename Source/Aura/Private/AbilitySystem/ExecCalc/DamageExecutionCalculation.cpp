@@ -6,7 +6,6 @@
 #include "AbilitySystem/AuraAttributeSet.h"
 #include "AbilitySystem/AuraAbilityTypes.h"
 #include "AuraGameplayTags.h"
-#include "AuraDebugLogger.h"
 
 // 声明需要在 Execution Calculation 中读取的属性；必须在 RelevantAttributesToCapture 中注册后才能捕获
 struct AuraDamageStatics {
@@ -53,13 +52,6 @@ UDamageExecutionCalculation::UDamageExecutionCalculation()
 
 void UDamageExecutionCalculation::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
 {
-	// #region agent log
-	AuraDebugLog(TEXT("C"), TEXT("run1"), TEXT("DamageExecutionCalculation.cpp:Execute"), TEXT("Damage execution calc entered"),
-		FString::Printf(TEXT("{\"SourceASC\":\"%s\",\"TargetASC\":\"%s\"}"),
-		ExecutionParams.GetSourceAbilitySystemComponent() ? *ExecutionParams.GetSourceAbilitySystemComponent()->GetName() : TEXT("null"),
-		ExecutionParams.GetTargetAbilitySystemComponent() ? *ExecutionParams.GetTargetAbilitySystemComponent()->GetName() : TEXT("null")));
-	// #endregion
-
 	const UAbilitySystemComponent* SourceASC = ExecutionParams.GetSourceAbilitySystemComponent();
 	const UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent();
 

@@ -63,6 +63,13 @@ public:
 	virtual AActor* GetAvatar_Implementation()override;
 	virtual void Die() override;
 
+	/** 获取武器骨骼网格（弹弓等），供远程攻击 Attach 石头用 */
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	USkeletalMeshComponent* GetWeaponMesh() const { return Weapon; }
+
+	/** 获取 Tag -> Montage 映射数据资产 */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Montage")
+	UAuraTagToMontage* GetTagToMontageData() const { return TagToMontageData; }
 
 	bool bDead = false;
 

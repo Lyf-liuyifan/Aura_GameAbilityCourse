@@ -7,6 +7,34 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "Abilities/GameplayAbility.h"
+
+namespace
+{
+	/** 检查 ASC 上是否有名称含 Attack 的 GA 正在运行 */
+	bool IsAttackAbilityActive(UAbilitySystemComponent* ASC)
+	{
+		if (!ASC) return false;
+
+		for (const FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
+		{
+			if (!Spec.IsActive() || !Spec.Ability) continue;
+
+			if (Spec.Ability->GetClass()->GetName().Contains(TEXT("Attack")))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+}
+
+UBTTask_Attack::UBTTask_Attack()
+{
+	// 需要 Tick 等待 GA 结束
+	bCreateNodeInstance = true;
+	bNotifyTick = true;
+}
 
 void UBTTask_Attack::InitializeFromAsset(UBehaviorTree& Asset)
 {
@@ -22,6 +50,10 @@ void UBTTask_Attack::InitializeFromAsset(UBehaviorTree& Asset)
 
 EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
+	FBTAttackTaskMemory* TaskMemory = reinterpret_cast<FBTAttackTaskMemory*>(NodeMemory);
+	TaskMemory->bWasAttackActive = false;
+	TaskMemory->WaitTime = 0.f;
+
 	// 1. 取 AI 控制的 Pawn（即敌人本体），无效则本次攻击任务失败
 	AAIController* AIController = OwnerComp.GetAIOwner();
 	APawn* OwnerPawn = AIController ? AIController->GetPawn() : nullptr;
@@ -39,18 +71,61 @@ EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerCom
 	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OwnerPawn);
 	if (!ASC) return EBTNodeResult::Failed;
 
-	// 5. 构造 GameplayEventData：Instigator=敌人自己，Target=玩家
-	//    直接把目标 Actor 放在 EventData.Target，GA 侧用 Get Target from Gameplay Event 节点即可取出
+	// 5. 若攻击 GA 已在运行，不重复发事件（避免蒙太奇每帧重启、Launch Notify 永远到不了）
+	if (IsAttackAbilityActive(ASC))
+	{
+		TaskMemory->bWasAttackActive = true;
+		return EBTNodeResult::InProgress;
+	}
+
+	// 6. 构造 GameplayEventData：Instigator=敌人自己，Target=玩家
 	FGameplayEventData EventData;
 	EventData.Instigator = OwnerPawn;
 	EventData.Target = TargetActor;
 	EventData.EventTag = EventTag;
 
-	// 6. 通过 ASC 发送 GameplayEvent；GA 那边 AbilityTriggers 配了同一 Tag 就会被自动激活
-	//    注意 UE5.3 该函数返回 void，无法用返回值判断成功，因此前面已显式校验 ASC / Target / Tag
+	// 7. 通过 ASC 发送 GameplayEvent；GA 那边 AbilityTriggers 配了同一 Tag 就会被自动激活
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(OwnerPawn, EventTag, EventData);
 
-	// 纯 C++ 路径：不调用 Super，蓝图子类的 Receive Execute AI 不会触发
-	// 目标传递与 GA 激活全部由 C++ 的 SendGameplayEventToActor 负责
-	return EBTNodeResult::Succeeded;
+	// 等待 GA 播完蒙太奇后再 Succeeded
+	return EBTNodeResult::InProgress;
+}
+
+void UBTTask_Attack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+{
+	Super::TickTask(OwnerComp, NodeMemory, DeltaSeconds);
+
+	FBTAttackTaskMemory* TaskMemory = reinterpret_cast<FBTAttackTaskMemory*>(NodeMemory);
+	AAIController* AIController = OwnerComp.GetAIOwner();
+	APawn* OwnerPawn = AIController ? AIController->GetPawn() : nullptr;
+	UAbilitySystemComponent* ASC = OwnerPawn
+		? UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OwnerPawn)
+		: nullptr;
+
+	if (!ASC)
+	{
+		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+		return;
+	}
+
+	const bool bAttackActive = IsAttackAbilityActive(ASC);
+	if (bAttackActive)
+	{
+		TaskMemory->bWasAttackActive = true;
+		return;
+	}
+
+	// 曾经 Active 过、现在不 Active = 本次攻击结束
+	if (TaskMemory->bWasAttackActive)
+	{
+		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+		return;
+	}
+
+	// 超时兜底：GA 若未进入 Active 状态（例如触发失败），避免 BT 永久卡在 InProgress
+	TaskMemory->WaitTime += DeltaSeconds;
+	if (TaskMemory->WaitTime > 5.f)
+	{
+		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+	}
 }

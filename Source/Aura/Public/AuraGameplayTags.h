@@ -66,6 +66,11 @@ public:
 
 	FGameplayTag Abilities_Attack;
 
+	/* Event Tags */
+	FGameplayTag Event_Attack_Ranged;
+	FGameplayTag Event_Montage_Rock_Spawn;
+	FGameplayTag Event_Montage_Rock_Launch;
+
 	/* Montage Tags */
 
 	FGameplayTag Montage_Attack_Weapon;

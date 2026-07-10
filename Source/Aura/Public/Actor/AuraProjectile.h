@@ -32,10 +32,10 @@ protected:
 
 public:	
 	
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat")
 	TObjectPtr<USphereComponent> Sphere;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat")
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovement;
 
 	UPROPERTY(EditAnywhere)
@@ -54,8 +54,18 @@ public:
 
 	bool bIsHit = false;
 
-	
+	/** 是否处于拉弓握持状态（Attach 在皮兜上，尚未发射） */
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	bool bHeld = false;
 
 	UPROPERTY(BlueprintReadWrite, meta = (ExposeOnSpawn = true))
 	FGameplayEffectSpecHandle DamageHandle;
+
+	/** 进入握持：关闭 Movement 和碰撞，停止飞行音效 */
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void EnterHeldState();
+
+	/** 松手发射：Detach 后启用 Movement，直线飞向目标 */
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void LaunchToward(const FVector& TargetLocation);
 };

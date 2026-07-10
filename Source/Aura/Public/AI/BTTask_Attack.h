@@ -10,17 +10,28 @@
 
 /**
  * 敌人攻击任务：从黑板取出目标 Actor，通过 GameplayEvent 把目标传给敌人自己的 ASC。
- * 对应的攻击 GA（GA_MeleeAttack 等）在 AbilityTriggers 里配置同一个 EventTag，
- * 收到事件后自动激活，并用 Get Gameplay Event Data 节点从 TargetData 取出目标。
- *
- * 这样 GA 不直接依赖 Blackboard，近战 / 远程敌人可复用同一套攻击 GA。
+ * 发送事件后返回 InProgress，直到攻击 GA 结束再 Succeeded，避免每帧重复触发导致蒙太奇被打断。
  */
 UCLASS()
 class AURA_API UBTTask_Attack : public UBTTask_BlueprintBase
 {
 	GENERATED_BODY()
+
+	struct FBTAttackTaskMemory
+	{
+		/** 是否曾检测到攻击 GA 处于 Active（用于区分「尚未激活」与「已结束」） */
+		bool bWasAttackActive = false;
+
+		/** 等待 GA 结束的累计时间，用于超时兜底 */
+		float WaitTime = 0.f;
+	};
+
 public:
+	UBTTask_Attack();
+
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
+	virtual uint16 GetInstanceMemorySize() const override { return sizeof(FBTAttackTaskMemory); }
 
 	/** 行为树资产加载后解析黑板 Key 选择器，确保 SelectedKeyName 与 Blackboard 资产里的 Key 绑定 */
 	virtual void InitializeFromAsset(UBehaviorTree& Asset) override;

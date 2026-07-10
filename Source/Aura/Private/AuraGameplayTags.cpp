@@ -61,6 +61,11 @@ void FAuraGameplayTags::InitializeNativeGameplayTags()
 
 	GameplayTags.Abilities_Attack = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Ability.Attack"));
 
+	/* Event Tag Register */
+	GameplayTags.Event_Attack_Ranged = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Event.Attack.Ranged"));
+	GameplayTags.Event_Montage_Rock_Spawn = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Event.Montage.Rock.Spawn"));
+	GameplayTags.Event_Montage_Rock_Launch = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Event.Montage.Rock.Launch"));
+
 	/* Montage Tag Register*/
 	GameplayTags.Montage_Attack_Weapon = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Montage.Attack.Weapon"));
 	GameplayTags.Montage_Attack_RightHand = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Montage.Attack.RightHand"));

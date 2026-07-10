@@ -9,6 +9,8 @@
 #include "AbilitySystem/AuraAbilityTypes.h"
 #include "Character/AuraCharacterBase.h"
 #include "UI/WidgetController/AuraOverlayWidgetController.h"
+#include "Abilities/GameplayAbility.h"
+#include "AbilitySystem/Abilities/AuraRangedAttack.h"
 
 UAuraOverlayWidgetController* UAuraAbilitySystemLibrary::GetOverlayWidgetController(const UObject* WorldContextObject)
 {
@@ -62,8 +64,6 @@ void UAuraAbilitySystemLibrary::AddCharacterAbilities(UObject* WorldContextObjec
 	{
 		if (Ability)
 		{
-			// Assuming you have a function to add abilities to the character
-			// AddAbilityToCharacter(Ability);
 			FGameplayAbilitySpec AbilitySpec(Ability, 1);
 			ASC->GiveAbility(AbilitySpec);
 		}
@@ -75,6 +75,12 @@ void UAuraAbilitySystemLibrary::AddCharacterAbilities(UObject* WorldContextObjec
 		{
 			FGameplayAbilitySpec AbilitySpec(Ability, 1);
 			ASC->GiveAbility(AbilitySpec);
+
+			// 蓝图 GA 的 AbilityTriggers 可能在 CDO 序列化时丢失，GiveAbility 后再补一次
+			if (UAuraRangedAttack* RangedCDO = Ability->GetDefaultObject<UAuraRangedAttack>())
+			{
+				RangedCDO->EnsureAbilityTriggersRegistered();
+			}
 		}
 	}
 }

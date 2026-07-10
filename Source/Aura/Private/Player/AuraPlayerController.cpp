@@ -10,36 +10,11 @@
 #include "UI/Widget/DamageTextWidgetComponent.h"
 #include "GameFramework/Character.h"
 #include "Character/AuraEnermy.h"
-#include "Misc/FileHelper.h"
-#include "HAL/FileManager.h"
-#include "HAL/PlatformTime.h"
-#include "Misc/Paths.h"
 
 
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
-
-// 把一条 NDJSON 日志追加到项目根目录下的 debug-cf25b3.log，供 debug mode 运行时取证
-static void AuraDebugLogNDJSON(const FString& Location, const FString& Message, const FString& DataJson)
-{
-	const uint64 Cycles = static_cast<uint64>(FPlatformTime::Cycles64());
-	const FString Line = FString::Printf(
-		TEXT("{\"sessionId\":\"cf25b3\",\"id\":\"log_%llu\",\"timestamp\":%llu,\"location\":\"%s\",\"message\":\"%s\",\"data\":%s,\"runId\":\"run1\"}\n"),
-		Cycles,
-		Cycles,
-		*Location,
-		*Message,
-		*DataJson);
-	// 用 ProjectDir 构造绝对路径，避免 UE 运行时工作目录不在项目根导致文件写到别处
-	const FString DebugLogFilePath = FPaths::ProjectDir() / TEXT("debug-cf25b3.log");
-	FFileHelper::SaveStringToFile(
-		Line,
-		*DebugLogFilePath,
-		FFileHelper::EEncodingOptions::AutoDetect,
-		&IFileManager::Get(),
-		FILEWRITE_Append);
-}
 
 AAuraPlayerController::AAuraPlayerController()
 {
@@ -162,20 +137,10 @@ UAuraAbilitySystemComponent* AAuraPlayerController::GetASC()
 //能力输入松开：统一转发到 ASC（LMB 已不再做寻路分支，火球走 GAS 自己的目标数据链路）
 void AAuraPlayerController::AbilityInputReleased(FGameplayTag InputTag)
 {
-	// #region agent log
-	UE_LOG(LogTemp, Warning, TEXT("[DBG] AbilityInputReleased InputTag=%s bRightMouseDown=%s"), *InputTag.ToString(), bRightMouseDown ? TEXT("true") : TEXT("false"));
-	AuraDebugLogNDJSON(
-		TEXT("AuraPlayerController.cpp:AbilityInputReleased"),
-		TEXT("Input released"),
-		FString::Printf(TEXT("{\"InputTag\":\"%s\",\"bRightMouseDown\":%s}"),
-			*InputTag.ToString(), bRightMouseDown ? TEXT("true") : TEXT("false")));
-	// #endregion
-
 	// 右键松开时清除门控标志，Look() 不再驱动相机旋转
 	if (InputTag.MatchesTagExact(FAuraGameplayTags::GetSingletonInstance().InputTag_RMB))
 	{
 		bRightMouseDown = false;
-		UE_LOG(LogTemp, Warning, TEXT("[DBG] RMB released -> bRightMouseDown=false"));
 	}
 	if (GetASC())
 	{
@@ -186,20 +151,10 @@ void AAuraPlayerController::AbilityInputReleased(FGameplayTag InputTag)
 //能力输入按住：统一转发到 ASC，激活 StarupInputTag 匹配的能力（LMB → GA_ProjectileSpell 火球）
 void AAuraPlayerController::AbilityInputHeld(FGameplayTag InputTag)
 {
-	// #region agent log
-	UE_LOG(LogTemp, Warning, TEXT("[DBG] AbilityInputHeld InputTag=%s bRightMouseDown=%s"), *InputTag.ToString(), bRightMouseDown ? TEXT("true") : TEXT("false"));
-	AuraDebugLogNDJSON(
-		TEXT("AuraPlayerController.cpp:AbilityInputHeld"),
-		TEXT("Input held"),
-		FString::Printf(TEXT("{\"InputTag\":\"%s\",\"bRightMouseDown\":%s}"),
-			*InputTag.ToString(), bRightMouseDown ? TEXT("true") : TEXT("false")));
-	// #endregion
-
 	// 右键按住期间置位门控标志，Look() 据此决定是否驱动相机旋转
 	if (InputTag.MatchesTagExact(FAuraGameplayTags::GetSingletonInstance().InputTag_RMB))
 	{
 		bRightMouseDown = true;
-		UE_LOG(LogTemp, Warning, TEXT("[DBG] RMB held -> bRightMouseDown=true"));
 	}
 	if (GetASC())
 	{
@@ -237,15 +192,6 @@ void AAuraPlayerController::Move(const FInputActionValue& Value)
 void AAuraPlayerController::Look(const FInputActionValue& Value)
 {
 	const FVector2D LookAxis = Value.Get<FVector2D>();
-
-	// #region agent log
-	UE_LOG(LogTemp, Warning, TEXT("[DBG] Look invoked x=%.5f y=%.5f bRightMouseDown=%s"), LookAxis.X, LookAxis.Y, bRightMouseDown ? TEXT("true") : TEXT("false"));
-	AuraDebugLogNDJSON(
-		TEXT("AuraPlayerController.cpp:Look"),
-		TEXT("Look invoked"),
-		FString::Printf(TEXT("{\"x\":%.5f,\"y\":%.5f,\"bRightMouseDown\":%s,\"hypothesisId\":\"A\"}"),
-			LookAxis.X, LookAxis.Y, bRightMouseDown ? TEXT("true") : TEXT("false")));
-	// #endregion
 
 	// 右键未按住时直接返回，鼠标移动只用于光标定位，不旋转相机
 	if (!bRightMouseDown)

@@ -9,7 +9,6 @@
 #include "../Aura.h"
 #include "Character/AuraCharacterBase.h"
 #include "Kismet/GameplayStatics.h"
-#include "AuraDebugLogger.h"
 
 // Sets default values
 AAuraProjectile::AAuraProjectile()
@@ -58,10 +57,63 @@ void AAuraProjectile::Destroyed()
 
 
 
+void AAuraProjectile::EnterHeldState()
+{
+	// 标记为握持，后续逻辑不当作已发射
+	bHeld = true;
+
+	if (ProjectileMovement)
+	{
+		ProjectileMovement->StopMovementImmediately();
+		ProjectileMovement->Deactivate();
+	}
+
+	// 握持时不参与碰撞，避免和角色自己 Overlap
+	Sphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	if (FlySoundComponent && FlySoundComponent->IsPlaying())
+	{
+		FlySoundComponent->Stop();
+	}
+}
+
+void AAuraProjectile::LaunchToward(const FVector& TargetLocation)
+{
+	if (!HasAuthority()) return;
+
+	// 先脱离皮兜 Socket，保留当前世界坐标
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	bHeld = false;
+
+	const FVector LaunchLocation = GetActorLocation();
+	FRotator LaunchRotation = (TargetLocation - LaunchLocation).Rotation();
+	// 与 CastFireBolt 一致：暂不使用抛物线，水平直线飞向目标
+	LaunchRotation.Pitch = 0.f;
+	SetActorRotation(LaunchRotation);
+
+	Sphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+	if (ProjectileMovement)
+	{
+		ProjectileMovement->Activate(true);
+		ProjectileMovement->Velocity = LaunchRotation.Vector() * ProjectileMovement->InitialSpeed;
+	}
+
+	if (FlySound)
+	{
+		FlySoundComponent->SetSound(FlySound);
+		FlySoundComponent->Play();
+	}
+}
+
 // Called when the game starts or when spawned
 void AAuraProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// 握持状态下不播飞行音效，等 LaunchToward 再播
+	if (bHeld) return;
+
 	FlySoundComponent->SetSound(FlySound);
 	FlySoundComponent->Play();
 }
@@ -69,12 +121,6 @@ void AAuraProjectile::BeginPlay()
 void AAuraProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OhterComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	UE_LOG(LogTemp, Log, TEXT("Projectile Overlap Other Actor"));
-	// #region agent log
-	AuraDebugLog(TEXT("B"), TEXT("run1"), TEXT("AuraProjectile.cpp:OnSphereOverlap"), TEXT("Projectile overlap begin"),
-		FString::Printf(TEXT("{\"OtherActor\":\"%s\",\"bHasAuthority\":%s}"),
-			OtherActor ? *OtherActor->GetName() : TEXT("null"),
-			HasAuthority() ? TEXT("true") : TEXT("false")));
-	// #endregion
 	if (ImpactSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
@@ -88,10 +134,6 @@ void AAuraProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
 		FlySoundComponent->Stop();
 
 		AAuraCharacterBase* TargetCharacter = Cast<AAuraCharacterBase>(OtherActor);
-		// #region agent log
-		AuraDebugLog(TEXT("B"), TEXT("run1"), TEXT("AuraProjectile.cpp:OnSphereOverlap"), TEXT("Cast to character result"),
-			FString::Printf(TEXT("{\"TargetCharacter\":\"%s\"}"), TargetCharacter ? *TargetCharacter->GetName() : TEXT("null")));
-		// #endregion
 		if (TargetCharacter)
 		{
 			if (UAbilitySystemComponent* TargetASC = TargetCharacter->GetAbilitySystemComponent())
@@ -99,10 +141,6 @@ void AAuraProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
 				if (DamageHandle.IsValid() && DamageHandle.Data.IsValid())
 				{
 					TargetASC->ApplyGameplayEffectSpecToTarget(*DamageHandle.Data.Get(), TargetASC);
-					// #region agent log
-					AuraDebugLog(TEXT("B"), TEXT("run1"), TEXT("AuraProjectile.cpp:OnSphereOverlap"), TEXT("Applied damage effect"),
-						FString::Printf(TEXT("{\"TargetASC\":\"%s\"}"), *TargetASC->GetName()));
-					// #endregion
 				}
 			}
 		}
