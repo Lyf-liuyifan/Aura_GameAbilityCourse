@@ -132,11 +132,13 @@ void UAuraRangedAttack::ActivateAbility(
 		return;
 	}
 
-	// 4. 并行：播攻击蒙太奇
+	// 4. 并行：播攻击蒙太奇（Interrupted 也必须 EndAbility，否则 HitReact 打断后 GA 永不结束、BT 卡死）
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this, NAME_None, AttackMontage);
 	MontageTask->OnCompleted.AddDynamic(this, &UAuraRangedAttack::OnMontageCompleted);
+	MontageTask->OnBlendOut.AddDynamic(this, &UAuraRangedAttack::OnMontageCompleted);
 	MontageTask->OnCancelled.AddDynamic(this, &UAuraRangedAttack::OnMontageCancelled);
+	MontageTask->OnInterrupted.AddDynamic(this, &UAuraRangedAttack::OnMontageCancelled);
 	MontageTask->ReadyForActivation();
 
 	// 5. 并行：等 Notify1 —— 生成石头并 Attach 到皮兜

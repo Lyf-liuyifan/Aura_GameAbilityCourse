@@ -31,13 +31,19 @@ void UAuraProjectilesSpell::CastFireBolt(const FVector& ProjectileTargetLocation
 		SpawnTransform.SetLocation(SocketLocation);
 		SpawnTransform.SetRotation(Rotation.Quaternion());
 	}
+
+	// Owner/Instigator 必须用 Avatar（角色），不能用 OwningActor（玩家是 PlayerState）
+	// 否则 Instigator 为空，火球会 Overlap 到自己
+	AActor* AvatarActor = GetAvatarActorFromActorInfo();
+	APawn* InstigatorPawn = Cast<APawn>(AvatarActor);
+
 	AAuraProjectile* Projectile = GetWorld()->SpawnActorDeferred<AAuraProjectile>(ProjectileClass,
 		SpawnTransform,
-		GetOwningActorFromActorInfo(),
-		Cast<APawn>(GetOwningActorFromActorInfo()),
+		AvatarActor,
+		InstigatorPawn,
 		ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
-	UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo());
+	UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(AvatarActor);
 	Projectile->DamageHandle = MakeDamageEffectSpec(SourceASC, DamageEffect, Projectile);	
 
 	//发射物携带了Handle,发射物和目标撞击时触发Effect

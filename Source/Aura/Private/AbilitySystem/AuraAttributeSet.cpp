@@ -9,8 +9,10 @@
 #include "GameFramework/Character.h"
 #include "Player/AuraPlayerController.h"
 #include "Character/AuraCharacterBase.h"
+#include "Character/AuraEnermy.h"
 #include "Logging/StructuredLog.h"
 #include "Net/UnrealNetwork.h"
+#include "Perception/AISense_Damage.h"
 
 UAuraAttributeSet::UAuraAttributeSet()
 {
@@ -216,16 +218,35 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 		if (LocalIncomingDamage > 0.f)
 		{
 			SetHealth(FMath::Clamp(CurrentHealth, 0.f, GetMaxHealth()));
+
+			// 仅当受伤者是敌人时，才向 AI Perception 上报 Damage 事件（玩家受伤无需拉仇恨）
+			if (Cast<AAuraEnermy>(Props.TargetAvatarActor))
+			{
+				if (UWorld* World = Props.TargetAvatarActor->GetWorld())
+				{
+					const FVector TargetLocation = Props.TargetAvatarActor->GetActorLocation();
+					UAISense_Damage::ReportDamageEvent(
+						World,
+						Props.TargetAvatarActor,
+						Props.SourceAvatarActor,
+						LocalIncomingDamage,
+						TargetLocation,
+						TargetLocation);
+				}
+			}
+
 			if(CurrentHealth <= 0.f)
 			{
 				//应用死亡效果，例如播放死亡动画、触发死亡事件等
 				UE_LOGFMT(LogTemp, Log, "{0} has been killed by {1}", *Props.TargetAvatarActor->GetName(), *Props.SourceAvatarActor->GetName());
 				Cast<ICombatInterface>(Props.TargetAvatarActor)->Die();
 				// Handle death logic here (e.g., trigger death events, play animations, etc.)
-			}else
+			}
+			else
 			{
-				//应用受伤效果，例如播放受伤动画、触发受伤事件等
-				Props.TargetASC->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag(FName("Effects.HitReact"))));
+				// 应用受伤效果：只在这里激活 HitReact GA（不要在 Tag 回调里再 Activate）
+				Props.TargetASC->TryActivateAbilitiesByTag(
+					FGameplayTagContainer(FGameplayTag::RequestGameplayTag(FName("Effects.HitReact"))));
 			}
 
 			//播放收到伤害文本

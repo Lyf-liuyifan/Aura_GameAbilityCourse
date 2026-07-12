@@ -3,6 +3,7 @@
 #include "Lab/AuraLabDeveloperSettings.h"
 #include "Lab/AuraLabLibrary.h"
 #include "Lab/AuraLabLog.h"
+#include "Lab/AuraLabNetProbeComponent.h"
 #include "Lab/AuraLabTargetDummy.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
@@ -26,6 +27,19 @@ void AAuraLabGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 	ScheduleGrantLabAbilities(NewPlayer);
+
+	// 为玩家 Pawn 挂载 Lab 网络探针，供 ServerRPCProbe 等实验使用
+	if (HasAuthority() && NewPlayer)
+	{
+		if (APawn* Pawn = NewPlayer->GetPawn())
+		{
+			if (!Pawn->FindComponentByClass<UAuraLabNetProbeComponent>())
+			{
+				UAuraLabNetProbeComponent* Probe = NewObject<UAuraLabNetProbeComponent>(Pawn, TEXT("AuraLabNetProbe"));
+				Probe->RegisterComponent();
+			}
+		}
+	}
 }
 
 void AAuraLabGameMode::SpawnLabDummies()

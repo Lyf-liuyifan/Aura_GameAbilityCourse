@@ -61,6 +61,12 @@ public:
 	UPROPERTY(BlueprintReadWrite, meta = (ExposeOnSpawn = true))
 	FGameplayEffectSpecHandle DamageHandle;
 
+	/** 是否应忽略该 Overlap 目标（发射者 / Owner / PlayerState 对应 Pawn） */
+	bool ShouldIgnoreOverlapTarget(AActor* OtherActor) const;
+
+	/** 在启用碰撞前，把发射者加入 MoveIgnore，减少出膛瞬间自撞 */
+	void ApplyMoveIgnoreForShooter();
+
 	/** 进入握持：关闭 Movement 和碰撞，停止飞行音效 */
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void EnterHeldState();

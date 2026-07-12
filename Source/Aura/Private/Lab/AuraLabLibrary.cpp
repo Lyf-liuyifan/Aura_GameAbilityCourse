@@ -6,8 +6,11 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "Abilities/GameplayAbility.h"
+#include "Engine/Engine.h"
+#include "Engine/NetConnection.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
 #include "GameFramework/Pawn.h"
 #include "HAL/IConsoleManager.h"
 #include "Player/AuraPlayerState.h"
@@ -270,6 +273,55 @@ void UAuraLabLibrary::RegisterConsoleCommands()
 				}
 			}
 			SimulateWrongClientGiveAbility(PC, AbilityClass);
+		}));
+
+	IConsoleManager::Get().RegisterConsoleCommand(
+		TEXT("AuraLab.NetDump"),
+		TEXT("Log network connection summary for local player."),
+		FConsoleCommandDelegate::CreateLambda([]()
+		{
+			if (!GEngine || !GEngine->GameViewport) return;
+			UWorld* World = GEngine->GameViewport->GetWorld();
+			if (!World) return;
+			APlayerController* PC = World->GetFirstPlayerController();
+			if (!PC) return;
+
+			UNetConnection* Conn = PC->GetNetConnection();
+			AURA_LAB_LOG(Warning, TEXT("NetDump | PC=%s Authority=%d Conn=%s"),
+				*PC->GetName(),
+				PC->HasAuthority(),
+				Conn ? *Conn->GetName() : TEXT("None"));
+
+			if (Conn)
+			{
+				float PingMs = 0.f;
+				if (APlayerState* PS = PC->PlayerState)
+				{
+					PingMs = PS->ExactPing;
+				}
+				AURA_LAB_LOG(Warning, TEXT("NetDump | Ping=%.1fms Driver=%s"),
+					PingMs,
+					Conn->Driver ? *Conn->Driver->GetName() : TEXT("None"));
+			}
+		}));
+
+	IConsoleManager::Get().RegisterConsoleCommand(
+		TEXT("AuraLab.SimulateLag"),
+		TEXT("AuraLab.SimulateLag <ms> <lossPercent> — set net pktlag and pktloss."),
+		FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>& Args)
+		{
+			const int32 LagMs = Args.Num() > 0 ? FCString::Atoi(*Args[0]) : 0;
+			const int32 Loss = Args.Num() > 1 ? FCString::Atoi(*Args[1]) : 0;
+
+			if (IConsoleVariable* LagVar = IConsoleManager::Get().FindConsoleVariable(TEXT("net pktlag")))
+			{
+				LagVar->Set(LagMs);
+			}
+			if (IConsoleVariable* LossVar = IConsoleManager::Get().FindConsoleVariable(TEXT("net pktloss")))
+			{
+				LossVar->Set(Loss);
+			}
+			AURA_LAB_LOG(Warning, TEXT("SimulateLag | pktlag=%d pktloss=%d"), LagMs, Loss);
 		}));
 }
 

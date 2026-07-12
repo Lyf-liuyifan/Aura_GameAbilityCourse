@@ -108,10 +108,30 @@ void UBTTask_Attack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemo
 		return;
 	}
 
+	TaskMemory->WaitTime += DeltaSeconds;
+
 	const bool bAttackActive = IsAttackAbilityActive(ASC);
 	if (bAttackActive)
 	{
 		TaskMemory->bWasAttackActive = true;
+
+		// 攻击 GA 被 HitReact 打断后若未正确 EndAbility，会永久 Active（握石不放）。
+		// 超时强制取消，让 BT 能切到 MoveTo / Advance。
+		if (TaskMemory->WaitTime > 3.f)
+		{
+			FGameplayTagContainer AttackTags;
+			AttackTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Abilities.Attack"), false));
+			ASC->CancelAbilities(&AttackTags, nullptr, nullptr);
+			for (const FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
+			{
+				if (Spec.IsActive() && Spec.Ability
+					&& Spec.Ability->GetClass()->GetName().Contains(TEXT("Attack")))
+				{
+					ASC->CancelAbilityHandle(Spec.Handle);
+				}
+			}
+			FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+		}
 		return;
 	}
 
@@ -123,8 +143,7 @@ void UBTTask_Attack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemo
 	}
 
 	// 超时兜底：GA 若未进入 Active 状态（例如触发失败），避免 BT 永久卡在 InProgress
-	TaskMemory->WaitTime += DeltaSeconds;
-	if (TaskMemory->WaitTime > 5.f)
+	if (TaskMemory->WaitTime > 1.5f)
 	{
 		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
 	}

@@ -132,11 +132,69 @@ void AAuraEnermy::BeginPlay()
 
 void AAuraEnermy::GetHitReact(const FGameplayTag CallbackTag, int32 NewCount)
 {
-	/*bIsReactingToHit = NewCount > 0;
-	GetCharacterMovement()->MaxWalkSpeed = bIsReactingToHit ? 0.f : WalkSpeed;*/
+	// NewOrRemoved：只根据 Tag 数量更新移动，不要在这里再 Activate HitReact
+	bIsReactingToHit = NewCount > 0;
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->MaxWalkSpeed = bIsReactingToHit ? 0.f : WalkSpeed;
+	}
 
-	//激活受击能力
-	GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag(FName("Effects.HitReact"))));
+	// 伤害 GE 若误 Grant Effects.HitReact，Tag 可能永不回 0；定时清理残留并恢复移速
+	if (NewCount > 0)
+	{
+		GetWorldTimerManager().ClearTimer(HitReactRecoverTimer);
+		GetWorldTimerManager().SetTimer(
+			HitReactRecoverTimer,
+			this,
+			&AAuraEnermy::RecoverFromHitReact,
+			HitReactRecoverDelay,
+			false);
+	}
+	else
+	{
+		GetWorldTimerManager().ClearTimer(HitReactRecoverTimer);
+	}
+}
+
+void AAuraEnermy::RecoverFromHitReact()
+{
+	if (!AbilitySystemComponent)
+	{
+		return;
+	}
+
+	const FGameplayTag HitReactTag = FGameplayTag::RequestGameplayTag(FName("Effects.HitReact"));
+	FGameplayTagContainer HitReactTags;
+	HitReactTags.AddTag(HitReactTag);
+
+	// 移除「Grant 了 Effects.HitReact」的激活中 GE（常见于伤害 GE 误配）
+	AbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(HitReactTags);
+	AbilitySystemComponent->RemoveLooseGameplayTag(HitReactTag);
+
+	int32 RemainingCount = AbilitySystemComponent->GetTagCount(HitReactTag);
+
+	// 若 Tag 仍在，多半是 HitReact 能力 ActivationOwnedTags 未结束 → 取消该能力以释放 Tag
+	if (RemainingCount > 0)
+	{
+		AbilitySystemComponent->CancelAbilities(&HitReactTags, nullptr, nullptr);
+		RemainingCount = AbilitySystemComponent->GetTagCount(HitReactTag);
+	}
+
+	bIsReactingToHit = RemainingCount > 0;
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->MaxWalkSpeed = bIsReactingToHit ? 0.f : WalkSpeed;
+	}
+
+	// 极端情况：取消后仍残留，强制恢复移速，避免永久站桩
+	if (RemainingCount > 0)
+	{
+		bIsReactingToHit = false;
+		if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+		{
+			MoveComp->MaxWalkSpeed = WalkSpeed;
+		}
+	}
 }
 
 

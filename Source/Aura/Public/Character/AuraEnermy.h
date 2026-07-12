@@ -54,11 +54,23 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void GetHitReact(const FGameplayTag CallbackTag, int32 NewCount);
 
+	/**
+	 * 清除可能残留的 Effects.HitReact（例如伤害 GE 错误 Grant 了该 Tag），并恢复移速。
+	 * 若 HitReact 能力仍通过 ActivationOwnedTags 持有该 Tag，移速保持为 0。
+	 */
+	void RecoverFromHitReact();
+
 	UPROPERTY(BlueprintReadOnly, Category = "Combat")
 	bool bIsReactingToHit;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Combat")
 	float WalkSpeed = 250.f;
+
+	/** 受击后多久尝试清除残留 HitReact Tag（秒） */
+	UPROPERTY(EditDefaultsOnly, Category = "Combat", meta = (ClampMin = "0.1"))
+	float HitReactRecoverDelay = 1.0f;
+
+	FTimerHandle HitReactRecoverTimer;
 
 
 

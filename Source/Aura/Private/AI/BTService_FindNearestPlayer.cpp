@@ -282,11 +282,20 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 		Blackboard->SetValueAsBool(BlackboardKeyIsMelee.SelectedKeyName, bIsMelee);
 	}
 
+	// Damage 感知会先写黑板 HasSeenPlayer；此处同步到节点 Memory，避免巡逻态把目标清掉
+	if (Memory && !Memory->bHasSeenPlayer
+		&& !BlackboardKeybHasSeenPlayer.SelectedKeyName.IsNone()
+		&& Blackboard->GetValueAsBool(BlackboardKeybHasSeenPlayer.SelectedKeyName))
+	{
+		Memory->bHasSeenPlayer = true;
+	}
+
 	// bHasSeenPlayer：false=巡逻态，true=战斗态（首次发现玩家后永久切换，直到玩家离开 NavMesh）
 	const bool bHasSeenPlayer = Memory ? Memory->bHasSeenPlayer : false;
 
 	float DistanceToTarget = MAX_FLT;
 	AAuraCharacter* TargetPlayer = nullptr;
+	bool bPlayerOnNavMesh = false;
 
 	if (!bHasSeenPlayer)
 	{
@@ -350,7 +359,6 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	else
 	{
 		// 【战斗态】情况3：全图追踪 NavMesh 上的玩家，不再受视野锥限制
-		bool bPlayerOnNavMesh = false;
 		TargetPlayer = FindPlayerOnNavMesh(World, MyLocation, DistanceToTarget, bPlayerOnNavMesh);
 
 		if (TargetPlayer && bPlayerOnNavMesh)
@@ -389,7 +397,6 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 				if (!BlackboardKeybNeedsToAdvance.SelectedKeyName.IsNone())
 				{
 					Blackboard->SetValueAsBool(BlackboardKeybNeedsToAdvance.SelectedKeyName, false);
-
 				}
 				if (!BlackboardKeyLocationFarFromTarget.SelectedKeyName.IsNone())
 				{
