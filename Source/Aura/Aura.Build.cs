@@ -29,7 +29,8 @@ public class Aura : ModuleRules
 			// Slate 是 UMG 的底层渲染/布局框架,UMG 构建于 Slate 之上
 			// 显式声明可避免直接使用 Slate 类型(FSlateBrush、SWidget 等)时再出链接错误
 			"Slate",
-			"SlateCore"});
+			"SlateCore",
+			"MotionWarping"});
 
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");

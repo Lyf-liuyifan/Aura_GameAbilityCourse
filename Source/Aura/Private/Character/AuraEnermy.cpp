@@ -14,6 +14,7 @@
 #include "Components/CapsuleComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/BehaviorTree.h"
+#include "MotionWarpingComponent.h"
 
 void AAuraEnermy::PossessedBy(AController* NewController)
 {
@@ -66,6 +67,8 @@ AAuraEnermy::AAuraEnermy()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
+
+	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
 
 }
 

@@ -8,6 +8,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AuraGameplayTags.h"
+#include "MotionWarpingComponent.h"
 
 UAuraRangedAttack::UAuraRangedAttack()
 {
@@ -130,6 +131,15 @@ void UAuraRangedAttack::ActivateAbility(
 		UE_LOG(LogTemp, Warning, TEXT("%s: Attack montage not found for tag %s"), *GetName(), *AttackMontageTag.ToString());
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
+	}
+
+	//设置motion warping 目标
+	if(UMotionWarpingComponent* MotionWarping = Character->FindComponentByClass<UMotionWarpingComponent>())
+	{
+		// 名称必须与 Montage 里 Motion Warping Notify 的 Warp Target Name 一致
+		MotionWarping->AddOrUpdateWarpTargetFromLocation(
+			FName("AttackDirectionWarping"),
+			TargetLocation);
 	}
 
 	// 4. 并行：播攻击蒙太奇（Interrupted 也必须 EndAbility，否则 HitReact 打断后 GA 永不结束、BT 卡死）

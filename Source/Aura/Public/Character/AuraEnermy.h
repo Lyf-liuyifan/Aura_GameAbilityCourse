@@ -11,6 +11,7 @@
 class UBlackboardComponent;
 class AAuraAIController;
 class UBehaviorTree;
+class UMotionWarpingComponent;
 /**
  * 
  */
@@ -72,6 +73,8 @@ public:
 
 	FTimerHandle HitReactRecoverTimer;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MotionWarping")
+	TObjectPtr<UMotionWarpingComponent> MotionWarping;
 
 
 	/* Animation Interface End*/
