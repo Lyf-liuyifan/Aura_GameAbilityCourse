@@ -7,3 +7,10 @@ FCharacterClassDefaultInfo UCharacterClassInfo::GetDefaultInfoForClass(ECharacte
 {
 	return ClassDefaultInfoMap.FindChecked(CharacterClass);
 }
+
+float UCharacterClassInfo::GetXPReward(ECharacterCategory Category, int32 Level) const
+{
+	return XPRewardMap.FindChecked(Category).GetValueAtLevel(Level);
+}
+
+

@@ -18,15 +18,7 @@ class UWidgetComponent;
 class UCharacterClassInfo;
 class UAuraTagToMontage;
 
-UENUM(BlueprintType)
-enum class ECharacterCategory : uint8
-{
-	Aura,
-	GolbianSpear,
-	GolbianShoot,
-	Monster,
-	GoblinShaman
-};
+
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedDelegate, float, NewValue);
 
@@ -62,7 +54,8 @@ public:
 	virtual FVector GetCombatSocketLocation_Implementation(const FGameplayTag& SocketTag) override;
 	virtual bool IsDead_Implementation() const override;
 	virtual AActor* GetAvatar_Implementation()override;
-	virtual void Die() override;
+	virtual void Die(AActor* Killer) override;
+	void RefreshAttributesForLevelUp() const;
 
 	/** 获取武器骨骼网格（弹弓等），供远程攻击 Attach 石头用 */
 	UFUNCTION(BlueprintCallable, Category = "Combat")
@@ -200,8 +193,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "CharacterInfo")
 	TObjectPtr<UCharacterClassInfo>  AttributeInitDataAsset;
 
+	// 角色职业：决定从 CharacterClassInfo 里取哪套默认属性与初始技能；取名与枚举 ECharacterClass 对齐，勿再用 Type
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CharacterInfo")
-	ECharacterClass CharacterType = ECharacterClass::None;
+	ECharacterClass CharacterClass = ECharacterClass::None;
 
 	/* CharacterClassInfo Interface */
 

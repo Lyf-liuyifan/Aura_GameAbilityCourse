@@ -31,7 +31,7 @@ public:
 
 	/* ICombatInterface */
 	virtual int32 GetPlayerLevel() override { return Level; }
-	virtual void Die() override;
+	virtual void Die(AActor* Killer) override;
 
 	
 

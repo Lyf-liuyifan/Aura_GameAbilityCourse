@@ -23,7 +23,7 @@ public:
 	/* ICombatInterface */
 	int32 GetPlayerLevel();
 	/* End ICombatInterface */
-	virtual void Die() override;
+	virtual void Die(AActor* Killer) override;
 private:
 	/*AAuraCharacter API*/
 	virtual void InitAbilityActorInfo() override;

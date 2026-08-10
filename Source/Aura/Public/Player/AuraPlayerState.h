@@ -9,8 +9,10 @@
 #include "AuraPlayerState.generated.h"
 
 class UAbilitySystemComponent;
-class UAbilitySystemComponent;
 class UAttributeSet;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerLevelChanged, int32, NewLevel);
+
 /**
  * 
  */
@@ -38,6 +40,13 @@ protected:
 	UFUNCTION()
 	void OnRep_Level(int32 OldLevel);
 
+	
+
 public:
 	virtual int32 GetPlayerLevel() override { return Level; }
+
+	void SetToLevel(int32 InLevels = 1);
+
+	UPROPERTY(BlueprintAssignable, Category = "Progression")
+	FOnPlayerLevelChanged OnLevelChanged;
 };

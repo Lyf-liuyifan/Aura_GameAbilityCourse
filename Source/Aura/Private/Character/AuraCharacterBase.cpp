@@ -44,10 +44,17 @@ void AAuraCharacterBase::ShowCharacterAttribute()
 	}
 }
 
-void AAuraCharacterBase::Die()
+void AAuraCharacterBase::Die(AActor* Killer)
 {
 	UE_LOG(LogTemp, Log, TEXT("%s has died."), *GetName());
 	MulticastOnDeath();
+}
+
+void AAuraCharacterBase::RefreshAttributesForLevelUp() const
+{
+	ApplyEffectToSelf(DefaultSecondaryAttributes);
+	// Vital 若也依赖 Level/MMC，再加：
+	// ApplyEffectToSelf(DefaultVitalAttributes);
 }
 
 FVector AAuraCharacterBase::GetCombatSocketLocation_Implementation(const FGameplayTag& SocketTag)
@@ -235,16 +242,16 @@ void AAuraCharacterBase::AddCharacterAbilities()
 
 void AAuraCharacterBase::InitAttributeByCharacterInfo()
 {
-	if (AttributeInitDataAsset && CharacterType != ECharacterClass::None)
+	if (AttributeInitDataAsset && CharacterClass != ECharacterClass::None)
 	{
-		DefaultPrimaryAttributes = AttributeInitDataAsset->GetDefaultInfoForClass(CharacterType).PrimaryAttributeInitEffect;
+		DefaultPrimaryAttributes = AttributeInitDataAsset->GetDefaultInfoForClass(CharacterClass).PrimaryAttributeInitEffect;
 		DefaultSecondaryAttributes = AttributeInitDataAsset->SecondaryAttributeInitEffect;
 		DefaultVitalAttributes = AttributeInitDataAsset->VitalAttributeInitEffect;
 	}
 	else {
-		if(CharacterType == ECharacterClass::None)
+		if(CharacterClass == ECharacterClass::None)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("CharacterType is None in %s"), *GetName());
+			UE_LOG(LogTemp, Warning, TEXT("CharacterClass is None in %s"), *GetName());
 		}
 		if(!AttributeInitDataAsset)
 		{

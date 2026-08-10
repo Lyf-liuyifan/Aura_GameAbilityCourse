@@ -227,7 +227,15 @@ public:
 	FGameplayAttributeData InComingDamage;
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, InComingDamage);
 
+	/*
+	* Progression Attributes
+	*/
+	UPROPERTY(BlueprintReadOnly, Category = "Progression Attributes", ReplicatedUsing = OnRep_XP)
+	FGameplayAttributeData XP;
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, XP);
 
+	UFUNCTION()
+	void OnRep_XP(const FGameplayAttributeData& OldXP);
 
 private:
 	void SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props);

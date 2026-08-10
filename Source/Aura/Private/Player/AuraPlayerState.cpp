@@ -3,6 +3,7 @@
 
 #include "Player/AuraPlayerState.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
+#include "Character/AuraCharacterBase.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystem/AuraAttributeSet.h"
 
@@ -34,5 +35,18 @@ UAbilitySystemComponent* AAuraPlayerState::GetAbilitySystemComponent() const
 
 void AAuraPlayerState::OnRep_Level(int32 OldLevel)
 {
+	OnLevelChanged.Broadcast(Level);
+}
 
+void AAuraPlayerState::SetToLevel(int32 InLevels)
+{
+	if (!HasAuthority()) return;
+	const int32 NewLevel = FMath::Max(1, InLevels);
+	if (Level == NewLevel) return;
+	Level = NewLevel;
+	OnLevelChanged.Broadcast(Level);
+	if (AAuraCharacterBase* Character = Cast<AAuraCharacterBase>(GetPawn()))
+	{
+		Character->RefreshAttributesForLevelUp();
+	}
 }

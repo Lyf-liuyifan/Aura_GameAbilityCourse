@@ -4,6 +4,7 @@
 #include "UI/WidgetController/AuraOverlayWidgetController.h"
 #include "AbilitySystem/AuraAttributeSet.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
+#include "Player/AuraPlayerState.h"
 
 
 //初始化的时候需要广播属性值给UI组件，改变UI组件的状态
@@ -15,6 +16,12 @@ void UAuraOverlayWidgetController::BroadcastInitialValues()
 	OnMaxHealthChanged.Broadcast(AuraAttributeSet->GetMaxHealth());
 	OnManaChanged.Broadcast(AuraAttributeSet->GetMana());
 	OnMaxManaChanged.Broadcast(AuraAttributeSet->GetMaxMana());
+	OnXPChanged.Broadcast(AuraAttributeSet->GetXP());
+
+	if (AAuraPlayerState* AuraPS = Cast<AAuraPlayerState>(PlayerState))
+	{
+		OnLevelChanged.Broadcast(AuraPS->GetPlayerLevel());
+	}
 }
 
 void UAuraOverlayWidgetController::BindCallbacksToDependencies()
@@ -26,8 +33,13 @@ void UAuraOverlayWidgetController::BindCallbacksToDependencies()
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAuraAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &UAuraOverlayWidgetController::MaxHealthChanged);	
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAuraAttributeSet::GetManaAttribute()).AddUObject(this, &UAuraOverlayWidgetController::ManaChanged);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAuraAttributeSet::GetMaxManaAttribute()).AddUObject(this, &UAuraOverlayWidgetController::MaxManaChanged);
-	
-	
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAuraAttributeSet::GetXPAttribute()).AddUObject(this, &UAuraOverlayWidgetController::XPChanged);
+
+	if (AAuraPlayerState* AuraPS = Cast<AAuraPlayerState>(PlayerState))
+	{
+		AuraPS->OnLevelChanged.AddDynamic(this, &UAuraOverlayWidgetController::HandlePlayerLevelChanged);
+	}
+
 	if (UAuraAbilitySystemComponent* AuraASC = Cast<UAuraAbilitySystemComponent>(AbilitySystemComponent))
 	{
 		AuraASC->EffectAssetTags.AddLambda([this](const FGameplayTagContainer& TagContainer)
@@ -72,4 +84,14 @@ void UAuraOverlayWidgetController::ManaChanged(const FOnAttributeChangeData& Dat
 void UAuraOverlayWidgetController::MaxManaChanged(const FOnAttributeChangeData& Data)
 {
 	OnMaxManaChanged.Broadcast(Data.NewValue);
+}
+
+void UAuraOverlayWidgetController::XPChanged(const FOnAttributeChangeData& Data)
+{
+	OnXPChanged.Broadcast(Data.NewValue);
+}
+
+void UAuraOverlayWidgetController::HandlePlayerLevelChanged(int32 NewLevel)
+{
+	OnLevelChanged.Broadcast(NewLevel);
 }

@@ -32,7 +32,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	UAnimMontage* GetHitReactAnimationMontage();
 
-	virtual void Die();
+	virtual void Die(AActor* Killer);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	bool IsDead()const;

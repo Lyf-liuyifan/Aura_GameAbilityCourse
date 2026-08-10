@@ -2,17 +2,22 @@
 
 
 #include "AbilitySystem/AuraAttributeSet.h"
-#include "GameFramework/Character.h"
-#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystem/Data/CharacterClassInfo.h"
 #include "AbilitySystem/AuraAbilityTypes.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AuraGameplayTags.h"
-#include "GameFramework/Character.h"
-#include "Player/AuraPlayerController.h"
 #include "Character/AuraCharacterBase.h"
 #include "Character/AuraEnermy.h"
+#include "Game/AuraGameModeBase.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/Pawn.h"
+#include "Interaction/CombatInterface.h"
+#include "Kismet/GameplayStatics.h"
 #include "Logging/StructuredLog.h"
 #include "Net/UnrealNetwork.h"
 #include "Perception/AISense_Damage.h"
+#include "Player/AuraPlayerController.h"
+#include "Player/AuraPlayerState.h"
 
 UAuraAttributeSet::UAuraAttributeSet()
 {
@@ -65,6 +70,7 @@ void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Mana, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, MaxMana, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, XP, COND_None, REPNOTIFY_Always);
 }
 
 void UAuraAttributeSet::OnRep_Strength(const FGameplayAttributeData& OldStrength)
@@ -239,7 +245,7 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 			{
 				//应用死亡效果，例如播放死亡动画、触发死亡事件等
 				UE_LOGFMT(LogTemp, Log, "{0} has been killed by {1}", *Props.TargetAvatarActor->GetName(), *Props.SourceAvatarActor->GetName());
-				Cast<ICombatInterface>(Props.TargetAvatarActor)->Die();
+				Cast<ICombatInterface>(Props.TargetAvatarActor)->Die(Props.SourceAvatarActor);
 				// Handle death logic here (e.g., trigger death events, play animations, etc.)
 			}
 			else
@@ -274,10 +280,36 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 				}
 			}
 
+
 		}
+	}
+	if (Data.EvaluatedData.Attribute == GetXPAttribute())
+	{
+		AAuraPlayerState* PS = Cast<AAuraPlayerState>(Data.Target.GetOwnerActor());
+		if (!PS || !PS->HasAuthority()) return;
+		AAuraGameModeBase* GM = Cast<AAuraGameModeBase>(
+			UGameplayStatics::GetGameMode(PS));
+		if (!GM || !GM->CharacterClassInfo) return;
+		UCharacterClassInfo* ClassInfo = GM->CharacterClassInfo;
+		float CurrentXP = GetXP();
+		int32 CurrentLevel = PS->GetPlayerLevel();
+		float XPForNextLevel = ClassInfo->GetXPForNextLevel(CurrentLevel);
+		while (CurrentXP >= XPForNextLevel && XPForNextLevel > 0.f)
+		{
+			CurrentXP -= XPForNextLevel;
+			CurrentLevel++;
+			XPForNextLevel = ClassInfo->GetXPForNextLevel(CurrentLevel);
+		}
+		SetXP(CurrentXP);              // AttributeSet 自己的 ACCESSOR
+		PS->SetToLevel(CurrentLevel);  // 改 PlayerState 的 Level
 	}
 }
 
+
+void UAuraAttributeSet::OnRep_XP(const FGameplayAttributeData& OldXP)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAuraAttributeSet, XP, OldXP);
+}
 
 void UAuraAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props)
 {

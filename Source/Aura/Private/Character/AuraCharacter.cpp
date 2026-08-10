@@ -85,8 +85,8 @@ int32 AAuraCharacter::GetPlayerLevel()
 	return 0;
 }
 
-void AAuraCharacter::Die()
+void AAuraCharacter::Die(AActor* Killer)
 {
 	SetLifeSpan(DeathLifeSpan);
-	Super::Die();
+	Super::Die(Killer);
 }

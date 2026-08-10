@@ -12,6 +12,8 @@ int32 ICombatInterface::GetPlayerLevel()
 
 
 
-void ICombatInterface::Die()
+void ICombatInterface::Die(AActor* Killer)
 {
+	//死亡，给击杀者经验值
+
 }

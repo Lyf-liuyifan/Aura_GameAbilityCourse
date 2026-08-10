@@ -37,6 +37,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangedSignature, float, He
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealthChangedSignature, float, MaxHealth);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnManaChangedSignature, float, Mana);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxManaChangedSignature, float, MaxMana);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnXPChangedSignature, float, XP);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLevelChangedSignature, int32, Level);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMessageWidgetRowSignature, FUIWidgetRow, WidgetRow);
 
 
@@ -63,6 +65,12 @@ public:
 		FOnMaxManaChangedSignature OnMaxManaChanged;
 
 		UPROPERTY(BlueprintAssignable, Category = "GAS|Attribute")
+		FOnXPChangedSignature OnXPChanged;
+
+		UPROPERTY(BlueprintAssignable, Category = "GAS|Attribute")
+		FOnLevelChangedSignature OnLevelChanged;
+
+		UPROPERTY(BlueprintAssignable, Category = "GAS|Attribute")
 		FMessageWidgetRowSignature MessageWidgetRowDelegate;
 
 protected:
@@ -73,6 +81,10 @@ protected:
 	void MaxHealthChanged(const FOnAttributeChangeData& Data);
 	void ManaChanged(const FOnAttributeChangeData& Data);
 	void MaxManaChanged(const FOnAttributeChangeData& Data);
+	void XPChanged(const FOnAttributeChangeData& Data);
+
+	UFUNCTION()
+	void HandlePlayerLevelChanged(int32 NewLevel);
 
 	template<typename T>
 	T* GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag) const

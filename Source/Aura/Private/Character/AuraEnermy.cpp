@@ -14,6 +14,10 @@
 #include "Components/CapsuleComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/BehaviorTree.h"
+#include "Game/AuraGameModeBase.h"
+#include "AbilitySystem/Data/CharacterClassInfo.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "Kismet/GameplayStatics.h"
 #include "MotionWarpingComponent.h"
 
 void AAuraEnermy::PossessedBy(AController* NewController)
@@ -91,10 +95,32 @@ void AAuraEnermy::UnHighlightEnermy()
 	Weapon->SetRenderCustomDepth(false);
 }
 
-void AAuraEnermy::Die()
+void AAuraEnermy::Die(AActor* Killer)
 {
+	if (HasAuthority() && Killer)
+	{
+		if (UAbilitySystemComponent* KillerASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Killer))
+		{
+			if (AAuraGameModeBase* AuraGM = Cast<AAuraGameModeBase>(UGameplayStatics::GetGameMode(this)))
+			{
+				if (UCharacterClassInfo* ClassInfo = AuraGM->CharacterClassInfo)
+				{
+					const float XPReward = ClassInfo->GetXPReward(CharacterCategory, Level);
+					FGameplayEffectContextHandle Context = KillerASC->MakeEffectContext();
+					Context.AddSourceObject(this);
+					FGameplayEffectSpecHandle SpecHandle = KillerASC->MakeOutgoingSpec(ClassInfo->XPRewardGE, GetPlayerLevel(), Context);
+					if (SpecHandle.IsValid())
+					{
+						const FGameplayTag XPTag = FGameplayTag::RequestGameplayTag(FName("Data.XP"));
+						UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, XPTag, XPReward);
+						KillerASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+					}
+				}
+			}
+		}
+	}
 	SetLifeSpan(DeathLifeSpan);
-	Super::Die();
+	Super::Die(Killer);
 	
 }
 
@@ -129,7 +155,7 @@ void AAuraEnermy::BeginPlay()
 	InitAbilityActorInfo();
 
 	GetAbilitySystemComponent()->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(FName("Effects.HitReact")), EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AAuraEnermy::GetHitReact);
-	UAuraAbilitySystemLibrary::AddCharacterAbilities(this, GetAbilitySystemComponent(), CharacterType);
+	UAuraAbilitySystemLibrary::AddCharacterAbilities(this, GetAbilitySystemComponent(), CharacterClass);
 }
 
 
