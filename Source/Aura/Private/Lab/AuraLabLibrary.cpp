@@ -13,6 +13,7 @@
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/Pawn.h"
 #include "HAL/IConsoleManager.h"
+#include "Player/AuraPlayerController.h"
 #include "Player/AuraPlayerState.h"
 #include "UObject/UObjectIterator.h"
 
@@ -118,23 +119,35 @@ void UAuraLabLibrary::GrantLabAbilities(UObject* WorldContextObject, APlayerCont
 	UAbilitySystemComponent* ASC = ResolveASC(PC);
 	if (!ASC || !PC)
 	{
-		AURA_LAB_LOG(Warning, TEXT("GrantLabAbilities: no ASC for controller"));
+		AURA_LAB_LOG(Warning, TEXT("GrantLabAbilities: no ASC for controller（先确认已 Possess 角色且 PlayerState 是 AuraPlayerState）"));
 		return;
 	}
 
 	if (!PC->HasAuthority())
 	{
-		AURA_LAB_LOG(Warning, TEXT("GrantLabAbilities: must run on Server (Authority)"));
+		AURA_LAB_LOG(Warning, TEXT("GrantLabAbilities: must run on Server (Authority)。多人大厅请在主机窗口执行 AuraLab.GrantAll"));
 		return;
 	}
 
+	// 统计实际授予数量，避免 Settings 里类指针为空时静默跳过
+	int32 GrantedCount = 0;
+	int32 SkippedNull = 0;
 	for (const TSubclassOf<UGameplayAbility>& AbilityClass : Abilities)
 	{
-		if (!AbilityClass) continue;
+		if (!AbilityClass)
+		{
+			++SkippedNull;
+			continue;
+		}
+
 		FGameplayAbilitySpec Spec(AbilityClass, 1, INDEX_NONE, ASC->GetOwner());
 		ASC->GiveAbility(Spec);
-		AURA_LAB_LOG(Log, TEXT("Granted Lab ability: %s"), *AbilityClass->GetName());
+		++GrantedCount;
+		AURA_LAB_LOG(Warning, TEXT("Granted Lab ability: %s"), *AbilityClass->GetName());
 	}
+
+	AURA_LAB_LOG(Warning, TEXT("GrantLabAbilities done | Granted=%d SkippedNull=%d Input=%d ActivatableNow=%d"),
+		GrantedCount, SkippedNull, Abilities.Num(), ASC->GetActivatableAbilities().Num());
 }
 
 bool UAuraLabLibrary::ActivateLabAbilityByClassName(UObject* WorldContextObject, APlayerController* PC, FName AbilityClassName)
@@ -147,17 +160,68 @@ bool UAuraLabLibrary::ActivateLabAbilityByClassName(UObject* WorldContextObject,
 	}
 
 	const FString TargetName = AbilityClassName.ToString();
-	for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
+
+	auto TryActivateMatching = [&]() -> bool
 	{
-		if (Spec.Ability && Spec.Ability->GetClass()->GetName().Contains(TargetName))
+		for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
 		{
-			const bool bActivated = ASC->TryActivateAbility(Spec.Handle);
-			AURA_LAB_LOG(Warning, TEXT("TryActivate %s -> %s"), *Spec.Ability->GetClass()->GetName(), bActivated ? TEXT("OK") : TEXT("FAILED"));
-			return bActivated;
+			if (Spec.Ability && Spec.Ability->GetClass()->GetName().Contains(TargetName))
+			{
+				const bool bActivated = ASC->TryActivateAbility(Spec.Handle);
+				AURA_LAB_LOG(Warning, TEXT("TryActivate %s -> %s"), *Spec.Ability->GetClass()->GetName(), bActivated ? TEXT("OK") : TEXT("FAILED"));
+				return bActivated;
+			}
 		}
+		return false;
+	};
+
+	if (TryActivateMatching())
+	{
+		return true;
 	}
 
-	AURA_LAB_LOG(Warning, TEXT("ActivateLabAbility: no ability matching '%s'"), *TargetName);
+	// 未 Grant 时：主机上按类名补发一次，避免「只改了 Project Settings 却忘了 GrantAll」
+	if (PC->HasAuthority())
+	{
+		UClass* FoundClass = nullptr;
+		for (TObjectIterator<UClass> It; It; ++It)
+		{
+			if (!It->IsChildOf(UGameplayAbility::StaticClass()) || It->HasAnyClassFlags(CLASS_Abstract))
+			{
+				continue;
+			}
+			if (It->GetName().Contains(TargetName))
+			{
+				FoundClass = *It;
+				break;
+			}
+		}
+
+		if (FoundClass)
+		{
+			FGameplayAbilitySpec Spec(FoundClass, 1, INDEX_NONE, ASC->GetOwner());
+			ASC->GiveAbility(Spec);
+			AURA_LAB_LOG(Warning, TEXT("ActivateLabAbility: auto-granted %s then retry"), *FoundClass->GetName());
+			if (TryActivateMatching())
+			{
+				return true;
+			}
+		}
+	}
+	else
+	{
+		AURA_LAB_LOG(Warning, TEXT("ActivateLabAbility: ASC 上没有 '%s'，且当前不是 Authority。请在主机执行 AuraLab.GrantAll 后再 Activate"), *TargetName);
+	}
+
+	// 打印现有技能，方便对照名字是否写错
+	AURA_LAB_LOG(Warning, TEXT("ActivateLabAbility: no ability matching '%s'. Activatable=%d"), *TargetName, ASC->GetActivatableAbilities().Num());
+	for (const FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
+	{
+		if (Spec.Ability)
+		{
+			AURA_LAB_LOG(Warning, TEXT("  - %s"), *Spec.Ability->GetClass()->GetName());
+		}
+	}
 	return false;
 }
 
@@ -221,7 +285,7 @@ void UAuraLabLibrary::RegisterConsoleCommands()
 
 	IConsoleManager::Get().RegisterConsoleCommand(
 		TEXT("AuraLab.GrantAll"),
-		TEXT("Grant all Lab abilities from DeveloperSettings + GameMode to local player (Server only)."),
+		TEXT("Grant all Lab abilities from DeveloperSettings. Client 会自动 Server RPC。"),
 		FConsoleCommandDelegate::CreateLambda([]()
 		{
 			if (!GEngine || !GEngine->GameViewport) return;
@@ -234,7 +298,29 @@ void UAuraLabLibrary::RegisterConsoleCommands()
 			if (const UAuraLabDeveloperSettings* Settings = UAuraLabDeveloperSettings::Get())
 			{
 				Abilities = Settings->DefaultLabAbilities;
+				AURA_LAB_LOG(Warning, TEXT("AuraLab.GrantAll | Settings DefaultLabAbilities=%d Authority=%d"),
+					Abilities.Num(), PC->HasAuthority());
 			}
+			else
+			{
+				AURA_LAB_LOG(Warning, TEXT("AuraLab.GrantAll: AuraLabDeveloperSettings missing"));
+				return;
+			}
+
+			// 多人 PIE 时 Output Log 常打在 Client：改为 RPC，避免必须点到 Server 窗口
+			if (!PC->HasAuthority())
+			{
+				if (AAuraPlayerController* AuraPC = Cast<AAuraPlayerController>(PC))
+				{
+					AuraPC->Server_GrantLabAbilities();
+					AURA_LAB_LOG(Warning, TEXT("AuraLab.GrantAll: 已从 Client 转发 Server RPC，稍后看 Granted 日志再 Activate"));
+					return;
+				}
+
+				AURA_LAB_LOG(Warning, TEXT("AuraLab.GrantAll: 当前 PC 不是 AuraPlayerController，无法 RPC。请用单人 PIE 或主机窗口"));
+				return;
+			}
+
 			GrantLabAbilities(World, PC, Abilities);
 		}));
 

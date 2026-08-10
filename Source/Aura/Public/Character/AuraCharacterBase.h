@@ -24,7 +24,8 @@ enum class ECharacterCategory : uint8
 	Aura,
 	GolbianSpear,
 	GolbianShoot,
-	Monster
+	Monster,
+	GoblinShaman
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedDelegate, float, NewValue);

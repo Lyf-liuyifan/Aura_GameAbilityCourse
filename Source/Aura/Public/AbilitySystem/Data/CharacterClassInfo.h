@@ -5,10 +5,13 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
+#include "ScalableFloat.h"
 #include "CharacterClassInfo.generated.h"
 
 class UGameplayEffect;
 
+
+//角色职业类别
 UENUM(BlueprintType)
 enum class ECharacterClass : uint8
 {
@@ -31,6 +34,9 @@ struct FCharacterClassDefaultInfo
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Class Defaults")
 	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
 
+	// FCharacterClassDefaultInfo 里加：
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Class Defaults")
+	FScalableFloat XPReward;
 };
 
 /**

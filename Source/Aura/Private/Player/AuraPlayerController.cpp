@@ -10,6 +10,10 @@
 #include "UI/Widget/DamageTextWidgetComponent.h"
 #include "GameFramework/Character.h"
 #include "Character/AuraEnermy.h"
+#include "Lab/AuraLabDeveloperSettings.h"
+#include "Lab/AuraLabLibrary.h"
+#include "Abilities/GameplayAbility.h"
+#include "InputCoreTypes.h"
 
 
 class UInputMappingContext;
@@ -41,6 +45,17 @@ void AAuraPlayerController::BroadcastDamageText_Implementation(const float Damag
 		DamageTextCom->AttachToComponent(HitCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 		DamageTextCom->SetDamageText(DamageValue, bIsCriticalHit, bIsBlockedHit);
 	}
+}
+
+void AAuraPlayerController::Server_GrantLabAbilities_Implementation()
+{
+	// Client 无法 GiveAbility；由本 RPC 在权威端按 Lab 配置授予
+	TArray<TSubclassOf<UGameplayAbility>> Abilities;
+	if (const UAuraLabDeveloperSettings* Settings = UAuraLabDeveloperSettings::Get())
+	{
+		Abilities = Settings->DefaultLabAbilities;
+	}
+	UAuraLabLibrary::GrantLabAbilities(this, this, Abilities);
 }
 
 
@@ -89,6 +104,12 @@ void AAuraPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
+	// Lab 预测探针：主键盘 4（当前 IMC 未映射 IA_1~4，不能只靠 Enhanced Input）
+	if (InputComponent)
+	{
+		InputComponent->BindKey(EKeys::Four, IE_Pressed, this, &AAuraPlayerController::OnLabPredictKeysPressed);
+	}
+
 	if (!MoveAction)
 	{
 		UE_LOG(LogTemp, Error, TEXT("AuraPlayerController [%s]: MoveAction is not set. Assign in BP_AuraPlayerController Class Defaults."), *GetName());
@@ -113,15 +134,18 @@ void AAuraPlayerController::SetupInputComponent()
 	// 是否真正驱动旋转由 bRightMouseDown 标志位在 Look() 里门控（标志位在 AbilityInputHeld/Released 里根据 InputTag.RMB 维护）
 	AuraInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AAuraPlayerController::Look);
 
-	// 能力输入：只绑定 Released 与 Held，Pressed 由 ASC 内部状态机处理（当前 ASC 没有 AbilityInputTagPressed）。
-	// 这里把 Pressed 参数显式 cast 成对应的成员函数指针类型，让模板正确推导 PressedFuncType；
-	// BindAbilityActions 内部有 if (PressedFunc) 判空，传入 nullptr 后不会真正绑定 Started 事件。
+	// 能力输入：Started 与 Triggered 都走 Held（数字键多为按下一次的 Started；LMB 常靠 Triggered）
 	AuraInputComponent->BindAbilityActions(
 		InputConfig,
 		this,
-		static_cast<void(AAuraPlayerController::*)(FGameplayTag)>(nullptr),
+		&ThisClass::AbilityInputHeld,
 		&ThisClass::AbilityInputReleased,
 		&ThisClass::AbilityInputHeld);
+}
+
+void AAuraPlayerController::OnLabPredictKeysPressed()
+{
+	AbilityInputHeld(FAuraGameplayTags::GetSingletonInstance().InputTag_4);
 }
 
 UAuraAbilitySystemComponent* AAuraPlayerController::GetASC()
