@@ -85,6 +85,7 @@ public:
 	/** 查询指定种类在指定等级下的经验奖励 */
 	float GetXPReward(ECharacterCategory Category, int32 Level) const;
 
+	UFUNCTION(BlueprintCallable, Category = "XP")
 	float GetXPForNextLevel(int32 PlayerLevel) const
 	{
 		return PlayerLevelUpRequirement.GetValueAtLevel(PlayerLevel);

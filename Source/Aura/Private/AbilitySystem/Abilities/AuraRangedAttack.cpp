@@ -45,6 +45,7 @@ void UAuraRangedAttack::EnsureAbilityTriggersRegistered()
 	}
 	if (!RequiredTag.IsValid())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[RangedAttack] EnsureAbilityTriggersRegistered: Event.Attack.Ranged tag not found"));
 		return;
 	}
 
@@ -62,6 +63,8 @@ void UAuraRangedAttack::EnsureAbilityTriggersRegistered()
 	{
 		if (Existing.TriggerTag == RequiredTag)
 		{
+			UE_LOG(LogTemp, Log, TEXT("[RangedAttack] %s: Trigger already registered: %s"),
+				*GetName(), *RequiredTag.ToString());
 			return;
 		}
 	}
@@ -70,6 +73,8 @@ void UAuraRangedAttack::EnsureAbilityTriggersRegistered()
 	TriggerData.TriggerTag = RequiredTag;
 	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 	AbilityTriggers.Add(TriggerData);
+	UE_LOG(LogTemp, Log, TEXT("[RangedAttack] %s: Added AbilityTrigger %s (total=%d)"),
+		*GetName(), *RequiredTag.ToString(), AbilityTriggers.Num());
 }
 
 bool UAuraRangedAttack::CanActivateAbility(
@@ -81,6 +86,8 @@ bool UAuraRangedAttack::CanActivateAbility(
 {
 	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[RangedAttack] %s: CanActivate blocked by Super"),
+			*GetNameSafe(ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr));
 		return false;
 	}
 
@@ -93,6 +100,8 @@ bool UAuraRangedAttack::CanActivateAbility(
 
 			if (Spec.Ability->GetClass()->IsChildOf(GetClass()))
 			{
+				UE_LOG(LogTemp, Log, TEXT("[RangedAttack] %s: CanActivate blocked — same class GA already active"),
+					*GetNameSafe(ActorInfo->AvatarActor.Get()));
 				return false;
 			}
 		}
@@ -109,12 +118,23 @@ void UAuraRangedAttack::ActivateAbility(
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+	UE_LOG(LogTemp, Log, TEXT("[RangedAttack] %s: ActivateAbility (Authority=%d, EventTag=%s)"),
+		*GetNameSafe(GetAvatarActorFromActorInfo()),
+		ActorInfo && ActorInfo->IsNetAuthority(),
+		TriggerEventData ? *TriggerEventData->EventTag.ToString() : TEXT("None"));
+
 	// 1. 只在服务器执行 AI 攻击逻辑
-	if (!ActorInfo->IsNetAuthority()) return;
+	if (!ActorInfo->IsNetAuthority())
+	{
+		UE_LOG(LogTemp, Log, TEXT("[RangedAttack] %s: skipped on non-authority"), *GetNameSafe(GetAvatarActorFromActorInfo()));
+		return;
+	}
 
 	// 2. 从 BTTask 传入的 EventData 解析玩家目标位置
 	if (!ResolveTargetLocation(TriggerEventData, TargetLocation))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[RangedAttack] %s: Failed — invalid Target in EventData"),
+			*GetNameSafe(GetAvatarActorFromActorInfo()));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
@@ -128,10 +148,17 @@ void UAuraRangedAttack::ActivateAbility(
 
 	if (!AttackMontage)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s: Attack montage not found for tag %s"), *GetName(), *AttackMontageTag.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("[RangedAttack] %s: Attack montage not found (Category=%d, Tag=%s, TagToMontage=%d)"),
+			*GetNameSafe(Character),
+			Character ? static_cast<int32>(Character->CharacterCategory) : -1,
+			*AttackMontageTag.ToString(),
+			TagToMontage != nullptr);
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
+
+	UE_LOG(LogTemp, Log, TEXT("[RangedAttack] %s: Playing montage %s toward %s"),
+		*GetNameSafe(Character), *GetNameSafe(AttackMontage), *TargetLocation.ToCompactString());
 
 	//设置motion warping 目标
 	if(UMotionWarpingComponent* MotionWarping = Character->FindComponentByClass<UMotionWarpingComponent>())
@@ -179,6 +206,9 @@ void UAuraRangedAttack::EndAbility(
 	}
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+
+	UE_LOG(LogTemp, Log, TEXT("[RangedAttack] %s: EndAbility (Cancelled=%d)"),
+		*GetNameSafe(ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr), bWasCancelled);
 }
 
 bool UAuraRangedAttack::ResolveTargetLocation(const FGameplayEventData* TriggerEventData, FVector& OutLocation) const
@@ -233,16 +263,33 @@ void UAuraRangedAttack::OnRockSpawnEvent(FGameplayEventData Payload)
 
 	AAuraCharacterBase* Character = Cast<AAuraCharacterBase>(GetAvatarActorFromActorInfo());
 	HeldRock = SpawnAndAttachHeldRock(Character);
+	if (!HeldRock)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[RangedAttack] %s: Rock spawn failed (ProjectileClass=%d, WeaponMesh=%d)"),
+			*GetNameSafe(Character), ProjectileClass != nullptr,
+			Character && Character->GetWeaponMesh() != nullptr);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("[RangedAttack] %s: Rock spawned and attached"), *GetNameSafe(Character));
+	}
 }
 
 void UAuraRangedAttack::OnRockLaunchEvent(FGameplayEventData Payload)
 {
-	if (!HeldRock) return;
+	if (!HeldRock)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[RangedAttack] %s: Launch event but no HeldRock"),
+			*GetNameSafe(GetAvatarActorFromActorInfo()));
+		return;
+	}
 
 	// 松手时再挂伤害 Spec（与 CastFireBolt 同一套）
 	UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
 	HeldRock->DamageHandle = MakeDamageEffectSpec(SourceASC, DamageEffect, HeldRock);
 
+	UE_LOG(LogTemp, Log, TEXT("[RangedAttack] %s: Launch rock toward %s"),
+		*GetNameSafe(GetAvatarActorFromActorInfo()), *TargetLocation.ToCompactString());
 	HeldRock->LaunchToward(TargetLocation);
 	HeldRock = nullptr;
 }
