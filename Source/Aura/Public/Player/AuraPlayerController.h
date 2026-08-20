@@ -35,16 +35,6 @@ public:
 	UFUNCTION(Client, Reliable)
 	void BroadcastDamageText(const float DamageValue, ACharacter* HitCharacter, bool bIsCriticalHit, bool bIsBlockedHit);
 
-	/** Lab：Client 控制台 GrantAll 时转发到 Server 真正 GiveAbility */
-	UFUNCTION(Server, Reliable)
-	void Server_GrantLabAbilities();
-
-protected:
-	/** Lab 预测探针：键盘 4（IMC 未绑 IA_4 时的后备） */
-	void OnLabPredictKeysPressed();
-
-
-
 protected:
 	virtual void BeginPlay() override;
 

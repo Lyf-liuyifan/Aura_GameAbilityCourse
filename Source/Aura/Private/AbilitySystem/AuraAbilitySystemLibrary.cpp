@@ -73,14 +73,16 @@ void UAuraAbilitySystemLibrary::AddCharacterAbilities(UObject* WorldContextObjec
 	{
 		if (Ability)
 		{
-			FGameplayAbilitySpec AbilitySpec(Ability, 1);
-			ASC->GiveAbility(AbilitySpec);
-
-			// 蓝图 GA 的 AbilityTriggers 可能在 CDO 序列化时丢失，GiveAbility 后再补一次
+			// ASC::OnGiveAbility 只按当时 CDO 上的 AbilityTriggers 写入 TriggeredAbilityMap。
+			// 蓝图序列化会把 PostInit 补上的 Event.Attack.Ranged 盖掉，必须在 Give 前再补一次；
+			// Give 后再改 CDO，卸技能时会按新列表去删一条从未登记的 Tag。
 			if (UAuraRangedAttack* RangedCDO = Ability->GetDefaultObject<UAuraRangedAttack>())
 			{
 				RangedCDO->EnsureAbilityTriggersRegistered();
 			}
+
+			FGameplayAbilitySpec AbilitySpec(Ability, 1);
+			ASC->GiveAbility(AbilitySpec);
 		}
 	}
 }

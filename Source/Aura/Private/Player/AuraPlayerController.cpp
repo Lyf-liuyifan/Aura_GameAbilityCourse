@@ -10,10 +10,6 @@
 #include "UI/Widget/DamageTextWidgetComponent.h"
 #include "GameFramework/Character.h"
 #include "Character/AuraEnermy.h"
-#include "Lab/AuraLabDeveloperSettings.h"
-#include "Lab/AuraLabLibrary.h"
-#include "Abilities/GameplayAbility.h"
-#include "InputCoreTypes.h"
 
 
 class UInputMappingContext;
@@ -46,19 +42,6 @@ void AAuraPlayerController::BroadcastDamageText_Implementation(const float Damag
 		DamageTextCom->SetDamageText(DamageValue, bIsCriticalHit, bIsBlockedHit);
 	}
 }
-
-void AAuraPlayerController::Server_GrantLabAbilities_Implementation()
-{
-	// Client 无法 GiveAbility；由本 RPC 在权威端按 Lab 配置授予
-	TArray<TSubclassOf<UGameplayAbility>> Abilities;
-	if (const UAuraLabDeveloperSettings* Settings = UAuraLabDeveloperSettings::Get())
-	{
-		Abilities = Settings->DefaultLabAbilities;
-	}
-	UAuraLabLibrary::GrantLabAbilities(this, this, Abilities);
-}
-
-
 
 //输入系统就绪（拿 Subsystem + 加 MappingContext）
 //鼠标显示设置（显示光标 + 样式）
@@ -104,12 +87,6 @@ void AAuraPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	// Lab 预测探针：主键盘 4（当前 IMC 未映射 IA_1~4，不能只靠 Enhanced Input）
-	if (InputComponent)
-	{
-		InputComponent->BindKey(EKeys::Four, IE_Pressed, this, &AAuraPlayerController::OnLabPredictKeysPressed);
-	}
-
 	if (!MoveAction)
 	{
 		UE_LOG(LogTemp, Error, TEXT("AuraPlayerController [%s]: MoveAction is not set. Assign in BP_AuraPlayerController Class Defaults."), *GetName());
@@ -141,11 +118,6 @@ void AAuraPlayerController::SetupInputComponent()
 		&ThisClass::AbilityInputHeld,
 		&ThisClass::AbilityInputReleased,
 		&ThisClass::AbilityInputHeld);
-}
-
-void AAuraPlayerController::OnLabPredictKeysPressed()
-{
-	AbilityInputHeld(FAuraGameplayTags::GetSingletonInstance().InputTag_4);
 }
 
 UAuraAbilitySystemComponent* AAuraPlayerController::GetASC()

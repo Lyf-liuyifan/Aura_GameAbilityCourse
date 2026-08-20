@@ -8,6 +8,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Abilities/GameplayAbility.h"
+#include "AbilitySystem/Abilities/AuraGameplayAbility.h"
 
 namespace
 {
@@ -28,34 +29,50 @@ namespace
 		return false;
 	}
 
-	/** GA 未激活超时时，打印 ASC 上已 Grant 的能力及其 Trigger，便于对照 Tag 是否一致 */
+	/** GA 未激活超时时，打印 ASC 上已 Grant 的能力及其 Trigger；空列表也必须打出来，避免误以为没跑到这段 */
 	void LogGrantedAbilityTriggers(UAbilitySystemComponent* ASC, const FGameplayTag& SentEventTag, AActor* OwnerPawn)
 	{
-		if (!ASC) return;
-
-		UE_LOG(LogTemp, Warning, TEXT("[BTTask_Attack] %s: Sent EventTag=%s but no Attack GA became Active. Granted abilities:"),
-			*GetNameSafe(OwnerPawn), *SentEventTag.ToString());
-
-		for (const FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
+		if (!ASC)
 		{
-			if (!Spec.Ability) continue;
+			UE_LOG(LogTemp, Warning, TEXT("[BTTask_Attack] %s: Sent EventTag=%s but ASC is null — 无法列出 Granted GA"),
+				*GetNameSafe(OwnerPawn), *SentEventTag.ToString());
+			return;
+		}
 
-			FString TriggerTags;
-			for (const FAbilityTriggerData& Trigger : Spec.Ability->AbilityTriggers)
+		const TArray<FGameplayAbilitySpec>& Specs = ASC->GetActivatableAbilities();
+		UE_LOG(LogTemp, Warning, TEXT("[BTTask_Attack] %s: Sent EventTag=%s but no Attack GA became Active. Granted count=%d"),
+			*GetNameSafe(OwnerPawn), *SentEventTag.ToString(), Specs.Num());
+
+		if (Specs.Num() == 0)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[BTTask_Attack]   (none granted) — 事件发出去了但 ASC 上没有 GA。检查敌人 CharacterClass / StartupAbilities 是否在 Authority 上 GiveAbility"));
+			return;
+		}
+
+		for (int32 Index = 0; Index < Specs.Num(); ++Index)
+		{
+			const FGameplayAbilitySpec& Spec = Specs[Index];
+			if (!Spec.Ability)
 			{
-				if (Trigger.TriggerTag.IsValid())
-				{
-					TriggerTags += Trigger.TriggerTag.ToString() + TEXT(", ");
-				}
+				UE_LOG(LogTemp, Warning, TEXT("[BTTask_Attack]   [%d] Ability=null Active=%d"),
+					Index, Spec.IsActive());
+				continue;
 			}
 
-			if (TriggerTags.IsEmpty())
+			// AbilityTriggers 是 UGameplayAbility 的 protected 成员，BT 不能直接读；
+			// Aura 技能走公开调试接口，其它 GA 退回公开的 AbilityTags。
+			FString TriggerTags = TEXT("(not AuraGA, AbilityTags fallback)");
+			if (const UAuraGameplayAbility* AuraAbility = Cast<UAuraGameplayAbility>(Spec.Ability))
 			{
-				TriggerTags = TEXT("(none)");
+				TriggerTags = AuraAbility->GetAbilityTriggerTagsDebugString();
 			}
 
-			UE_LOG(LogTemp, Warning, TEXT("[BTTask_Attack]   GA=%s | Active=%d | Triggers=[%s]"),
-				*Spec.Ability->GetClass()->GetName(), Spec.IsActive(), *TriggerTags);
+			UE_LOG(LogTemp, Warning, TEXT("[BTTask_Attack]   [%d] GA=%s | Active=%d | AbilityTags=[%s] | Triggers=[%s]"),
+				Index,
+				*Spec.Ability->GetClass()->GetName(),
+				Spec.IsActive(),
+				*Spec.Ability->AbilityTags.ToStringSimple(),
+				*TriggerTags);
 		}
 	}
 }

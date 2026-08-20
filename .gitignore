@@ -6,6 +6,8 @@ Build
 
 .vscode
 .vs
+compile_commands.json
+.cache
 *.VC.db
 *.opensdf
 *.opendb

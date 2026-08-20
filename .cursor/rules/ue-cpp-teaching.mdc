@@ -7,7 +7,7 @@ alwaysApply: true
 
 学生用**自己写 C++**学 UE5，不以蓝图代劳玩法逻辑。
 入口陌生时先按 `ue-source-reading` **Phase A 带读一块**，再给可跟做的 `.h/.cpp`；实现答案不能替代带读。
-心路、组块量、检验、收束按 `cognitive-teaching`；学生要先看完整解题流程时先走 `ue-guided-demo`。
+心路、组块量、收束按 `cognitive-teaching`；实现类默认**不问检验**（学生明确在学该模块时才开）。学生要先看完整解题流程时先走 `ue-guided-demo`。
 
 ## 实现类回答顺序（分回合）
 

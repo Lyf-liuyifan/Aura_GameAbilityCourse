@@ -14,6 +14,19 @@ UAuraGameplayAbility::UAuraGameplayAbility()
 	DamageTypeTag = GameplayTags.Damage_Fire;
 }
 
+FString UAuraGameplayAbility::GetAbilityTriggerTagsDebugString() const
+{
+	FString Out;
+	for (const FAbilityTriggerData& Trigger : AbilityTriggers)
+	{
+		if (Trigger.TriggerTag.IsValid())
+		{
+			Out += Trigger.TriggerTag.ToString() + TEXT(", ");
+		}
+	}
+	return Out.IsEmpty() ? TEXT("(none)") : Out;
+}
+
 FGameplayEffectSpecHandle UAuraGameplayAbility::MakeDamageEffectSpec(
 	UAbilitySystemComponent* SourceASC,
 	TSubclassOf<UGameplayEffect> DamageEffectClass,

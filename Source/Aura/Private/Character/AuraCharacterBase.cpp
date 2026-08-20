@@ -7,9 +7,6 @@
 #include "Components/WidgetComponent.h"
 #include "AbilitySystem/AuraAttributeSet.h"
 #include "AuraGameplayTags.h"
-#include "Lab/AuraLabDeveloperSettings.h"
-#include "Lab/AuraLabLog.h"
-#include "Lab/GA_Lab_PredictKeys.h"
 
 AAuraCharacterBase::AAuraCharacterBase()
 {
@@ -204,40 +201,6 @@ void AAuraCharacterBase::AddCharacterAbilities()
 {
 	UAuraAbilitySystemComponent* ASC = CastChecked<UAuraAbilitySystemComponent>(AbilitySystemComponent);
 	ASC->AddCharacterAbilities(CharacterAbilities);
-
-	// Lab：自动授予预测探针并绑 InputTag.4（Tag 必须在运行时取，不能信 CDO 构造期赋值）
-	if (!HasAuthority())
-	{
-		return;
-	}
-	if (const UAuraLabDeveloperSettings* Settings = UAuraLabDeveloperSettings::Get())
-	{
-		if (!Settings->bLabModeEnabled)
-		{
-			return;
-		}
-	}
-
-	const FGameplayTag Input4 = FAuraGameplayTags::GetSingletonInstance().InputTag_4;
-	if (!Input4.IsValid())
-	{
-		AURA_LAB_LOG(Warning, TEXT("PredictKeys Grant 失败：InputTag.4 无效（NativeTags 未初始化？）"));
-		return;
-	}
-
-	// 已授予则跳过，避免 InitAbilityActorInfo 重复 Give
-	for (const FGameplayAbilitySpec& Existing : ASC->GetActivatableAbilities())
-	{
-		if (Existing.Ability && Existing.Ability->GetClass() == UGA_Lab_PredictKeys::StaticClass())
-		{
-			return;
-		}
-	}
-
-	FGameplayAbilitySpec Spec(UGA_Lab_PredictKeys::StaticClass(), 1);
-	Spec.DynamicAbilityTags.AddTag(Input4);
-	ASC->GiveAbility(Spec);
-	AURA_LAB_LOG(Warning, TEXT("Granted GA_Lab_PredictKeys | InputTag=%s — 按数字键 4 激活"), *Input4.ToString());
 }
 
 void AAuraCharacterBase::InitAttributeByCharacterInfo()
